@@ -99,10 +99,10 @@ The built files will be in the `dist/` directory.
 ### Linting & Formatting
 
 ```bash
-# Linting
+# Linting (Oxlint)
 pnpm lint
 
-# Formatting
+# Formatting (Oxfmt)
 pnpm format
 ```
 

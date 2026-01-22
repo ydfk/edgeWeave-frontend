@@ -99,10 +99,10 @@ pnpm build
 ### 代码检查与格式化
 
 ```bash
-# 代码检查
+# 代码检查 (Oxlint)
 pnpm lint
 
-# 格式化
+# 格式化 (Oxfmt)
 pnpm format
 ```
 

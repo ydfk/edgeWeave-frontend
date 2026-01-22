@@ -6,14 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "preview": "vite preview",
     "cz": "git add . & czg",
     "cz:ai": "git add . & czg ai",
     "cz:pass": "git add . & czg --no-verify",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "lint-format": "pnpm lint:fix && pnpm format"
   },
   "dependencies": {
@@ -31,7 +31,6 @@
     "zustand": "^5.0.10"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
     "@tailwindcss/forms": "^0.5.11",
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
@@ -39,17 +38,13 @@
     "@vitejs/plugin-react": "^5.1.2",
     "autoprefixer": "^10.4.23",
     "czg": "^1.12.0",
-    "eslint": "^9.39.2",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^17.0.0",
+    "oxfmt": "^0.2.0",
+    "oxlint": "^0.9.3",
     "postcss": "^8.5.6",
-    "prettier": "^3.8.1",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.53.1",
     "vite": "8.0.0-beta.8"
   },
   "pnpm": {
