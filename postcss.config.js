@@ -5,9 +5,11 @@
  * @LastEditors: ydfk
  * @LastEditTime: 2025-03-11 10:58:04
  */
+
 export default {
   plugins: {
     tailwindcss: {},
+
     autoprefixer: {},
   },
-};
+}

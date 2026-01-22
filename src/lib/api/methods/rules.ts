@@ -1,25 +1,28 @@
-import { alovaInstance } from "..";
+import { alovaInstance } from ".."
 
 // 规则模板列表
-export const getRuleTemplates = alovaInstance.Get("/rule-templates");
+export const getRuleTemplates = alovaInstance.Get("/rule-templates")
 
 // 创建规则模板
 export const createRuleTemplate = (payload: Record<string, unknown>) =>
-  alovaInstance.Post("/rule-templates", payload);
+  alovaInstance.Post("/rule-templates", payload)
 
 // 同步ACL4SSR模板
-export const syncAcl4ssrTemplate = alovaInstance.Post("/rule-templates/acl4ssr/sync");
+export const syncAcl4ssrTemplate = alovaInstance.Post(
+  "/rule-templates/acl4ssr/sync",
+)
 
 // 规则集列表
-export const getRuleSets = alovaInstance.Get("/rule-sets");
+export const getRuleSets = alovaInstance.Get("/rule-sets")
 
 // 创建规则集
 export const createRuleSet = (payload: Record<string, unknown>) =>
-  alovaInstance.Post("/rule-sets", payload);
+  alovaInstance.Post("/rule-sets", payload)
 
 // 更新规则集
 export const updateRuleSet = (id: string, payload: Record<string, unknown>) =>
-  alovaInstance.Put(`/rule-sets/${id}`, payload);
+  alovaInstance.Put(`/rule-sets/${id}`, payload)
 
 // 删除规则集
-export const deleteRuleSet = (id: string) => alovaInstance.Delete(`/rule-sets/${id}`);
+export const deleteRuleSet = (id: string) =>
+  alovaInstance.Delete(`/rule-sets/${id}`)

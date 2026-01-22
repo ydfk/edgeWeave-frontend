@@ -1,34 +1,38 @@
-import { useState } from "react";
-import { useRequest } from "alova/client";
-import { useNavigate, useLocation } from "react-router-dom";
-import { login } from "../lib/api/methods/user";
-import { Button } from "../components/ui/button";
-import { Lock, User, AlertCircle, Workflow, ArrowRight } from "lucide-react";
+import { useState } from "react"
+import { useRequest } from "alova/client"
+import { useNavigate, useLocation } from "react-router-dom"
+import { login } from "../lib/api/methods/user"
+import { Button } from "../components/ui/button"
+import { Lock, User, AlertCircle, Workflow, ArrowRight } from "lucide-react"
 
 export function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-  const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from?.pathname || "/"
 
-  const { send: loginRequest, loading, error } = useRequest(login, {
+  const {
+    send: loginRequest,
+    loading,
+    error,
+  } = useRequest(login, {
     immediate: false,
-  });
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username || !password) return;
-    
+    e.preventDefault()
+    if (!username || !password) return
+
     try {
       // Pass the data as the request body
-      await loginRequest({ username, password });
+      await loginRequest({ username, password })
       // Token is handled by alova middleware in src/lib/api/index.ts
-      navigate(from, { replace: true });
+      navigate(from, { replace: true })
     } catch (err) {
-      console.error("Login failed", err);
+      console.error("Login failed", err)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden">
@@ -51,7 +55,10 @@ export function Login() {
           <div className="p-8 space-y-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="username">
+                <label
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="username"
+                >
                   账号
                 </label>
                 <div className="relative">
@@ -71,7 +78,10 @@ export function Login() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="password">
+                <label
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="password"
+                >
                   密码
                 </label>
                 <div className="relative">
@@ -97,28 +107,35 @@ export function Login() {
                 </div>
               )}
 
-              <Button 
-                type="submit" 
-                className="w-full group relative overflow-hidden" 
+              <Button
+                type="submit"
+                className="w-full group relative overflow-hidden"
                 disabled={loading}
               >
-                <span className={`flex items-center justify-center gap-2 transition-transform duration-300 ${loading ? 'translate-y-0' : 'group-hover:-translate-y-[150%]'}`}>
+                <span
+                  className={`flex items-center justify-center gap-2 transition-transform duration-300 ${
+                    loading
+                      ? "translate-y-0"
+                      : "group-hover:-translate-y-[150%]"
+                  }`}
+                >
                   {loading ? "登录中..." : "立即登录"}
                 </span>
                 {!loading && (
-                   <span className="absolute inset-0 flex items-center justify-center gap-2 translate-y-[150%] transition-transform duration-300 group-hover:translate-y-0">
+                  <span className="absolute inset-0 flex items-center justify-center gap-2 translate-y-[150%] transition-transform duration-300 group-hover:translate-y-0">
                     进入系统 <ArrowRight className="h-4 w-4" />
                   </span>
                 )}
               </Button>
             </form>
           </div>
-          
+
           <div className="bg-muted/50 p-4 text-center text-xs text-muted-foreground border-t">
-             &copy; {new Date().getFullYear()} EdgeWeave System. All rights reserved.
+            &copy; {new Date().getFullYear()} EdgeWeave System. All rights
+            reserved.
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

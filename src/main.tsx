@@ -5,22 +5,22 @@
  * @LastEditors: ydfk
  * @LastEditTime: 2025-03-11 11:00:10
  */
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import "./styles/globals.css";
-import App from "./App";
-import Unauthorized from "./components/error/unauthorized";
-import { Dashboard } from "./pages/dashboard";
-import { NodeManagement } from "./pages/node-management";
-import { RuleManagement } from "./pages/rule-management";
-import { SubscriptionManagement } from "./pages/subscription-management";
-import { OutputManagement } from "./pages/output-management";
-import { UserManagement } from "./pages/user-management";
-import { Settings } from "./pages/settings";
-import { NotFound } from "./pages/not-found";
-import { Login } from "./pages/login";
-import { RequireAuth } from "./components/auth/require-auth";
+import { StrictMode } from "react"
+import { createRoot } from "react-dom/client"
+import { RouterProvider, createBrowserRouter } from "react-router-dom"
+import "./styles/globals.css"
+import App from "./App"
+import Unauthorized from "./components/error/unauthorized"
+import { Dashboard } from "./pages/dashboard"
+import { NodeManagement } from "./pages/node-management"
+import { RuleManagement } from "./pages/rule-management"
+import { SubscriptionManagement } from "./pages/subscription-management"
+import { OutputManagement } from "./pages/output-management"
+import { UserManagement } from "./pages/user-management"
+import { Settings } from "./pages/settings"
+import { NotFound } from "./pages/not-found"
+import { Login } from "./pages/login"
+import { RequireAuth } from "./components/auth/require-auth"
 
 // 创建路由
 const router = createBrowserRouter([
@@ -61,7 +61,7 @@ const router = createBrowserRouter([
         path: "settings",
         element: <Settings />,
       },
-    ]
+    ],
   },
   {
     path: "/auth/login",
@@ -74,11 +74,11 @@ const router = createBrowserRouter([
   {
     path: "*",
     element: <NotFound />,
-  }
-]);
+  },
+])
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RouterProvider router={router} />
-  </StrictMode>
-);
+  </StrictMode>,
+)

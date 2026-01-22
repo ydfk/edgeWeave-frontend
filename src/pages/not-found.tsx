@@ -1,9 +1,9 @@
-import { AlertCircle } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { AlertCircle } from "lucide-react"
+import { Button } from "../components/ui/button"
+import { useNavigate } from "react-router-dom"
 
 export function NotFound() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
@@ -21,5 +21,5 @@ export function NotFound() {
         返回首页
       </Button>
     </div>
-  );
+  )
 }

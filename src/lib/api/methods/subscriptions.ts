@@ -1,24 +1,28 @@
-import { alovaInstance } from "..";
+import { alovaInstance } from ".."
 
 // 订阅源列表
-export const getSubscriptionSources = alovaInstance.Get("/subscription-sources");
+export const getSubscriptionSources = alovaInstance.Get("/subscription-sources")
 
 // 创建订阅源
 export const createSubscriptionSource = (payload: Record<string, unknown>) =>
-  alovaInstance.Post("/subscription-sources", payload);
+  alovaInstance.Post("/subscription-sources", payload)
 
 // 更新订阅源
-export const updateSubscriptionSource = (id: string, payload: Record<string, unknown>) =>
-  alovaInstance.Put(`/subscription-sources/${id}`, payload);
+export const updateSubscriptionSource = (
+  id: string,
+  payload: Record<string, unknown>,
+) => alovaInstance.Put(`/subscription-sources/${id}`, payload)
 
 // 删除订阅源
 export const deleteSubscriptionSource = (id: string) =>
-  alovaInstance.Delete(`/subscription-sources/${id}`);
+  alovaInstance.Delete(`/subscription-sources/${id}`)
 
 // 同步订阅源
 export const syncSubscriptionSource = (id: string) =>
-  alovaInstance.Post(`/subscription-sources/${id}/sync`);
+  alovaInstance.Post(`/subscription-sources/${id}/sync`)
 
 // 同步记录
-export const getSubscriptionSyncs = (id: string, params?: Record<string, unknown>) =>
-  alovaInstance.Get(`/subscription-sources/${id}/syncs`, { params });
+export const getSubscriptionSyncs = (
+  id: string,
+  params?: Record<string, unknown>,
+) => alovaInstance.Get(`/subscription-sources/${id}/syncs`, { params })
