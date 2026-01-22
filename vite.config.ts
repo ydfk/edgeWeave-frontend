@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    experimental: {
+      enableNativePlugin: "v1"
+    },
     server: {
       port: Number(env.VITE_PORT),
       // proxy: {
