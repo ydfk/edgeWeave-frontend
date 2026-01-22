@@ -11,21 +11,54 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import "./styles/globals.css";
 import App from "./App";
 import Unauthorized from "./components/error/unauthorized";
+import { Dashboard } from "./pages/dashboard";
+import { NodeManagement } from "./pages/node-management";
+import { RuleManagement } from "./pages/rule-management";
+import { SubscriptionManagement } from "./pages/subscription-management";
+import { UserManagement } from "./pages/user-management";
+import { Settings } from "./pages/settings";
+import { NotFound } from "./pages/not-found";
 
 // 创建路由
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: <NotFound />,
+    children: [
+      {
+        index: true,
+        element: <Dashboard />,
+      },
+      {
+        path: "nodes",
+        element: <NodeManagement />,
+      },
+      {
+        path: "rules",
+        element: <RuleManagement />,
+      },
+      {
+        path: "subscriptions",
+        element: <SubscriptionManagement />,
+      },
+      {
+        path: "users",
+        element: <UserManagement />,
+      },
+      {
+        path: "settings",
+        element: <Settings />,
+      },
+    ]
   },
   {
     path: "/401",
     element: <Unauthorized />,
   },
   {
-    path: "/auth/login",
-    // 暂时重定向到首页，因为还没有实现登录页面
-    element: <App />,
+    path: "*",
+    element: <NotFound />,
   }
 ]);
 
