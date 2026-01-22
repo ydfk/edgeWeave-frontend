@@ -1,18 +1,26 @@
-import { LayoutDashboard, Server, Workflow, Rss, Users, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Server, Workflow, Rss, Download, Users, Settings, LogOut } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   onNavigate?: () => void;
 }
 
 export function Sidebar({ className, onNavigate }: SidebarProps) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/auth/login");
+  };
+
   const navItems = [
     { icon: LayoutDashboard, label: "仪表盘", href: "/" },
     { icon: Server, label: "节点管理", href: "/nodes" },
     { icon: Workflow, label: "规则管理", href: "/rules" },
     { icon: Rss, label: "订阅管理", href: "/subscriptions" },
+    { icon: Download, label: "输出管理", href: "/outputs" },
     { icon: Users, label: "用户管理", href: "/users" },
     { icon: Settings, label: "系统设置", href: "/settings" },
   ];
@@ -51,7 +59,11 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       </div>
       
       <div className="mt-auto px-3 pb-4">
-         <Button variant="ghost" className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive">
+         <Button 
+            variant="ghost" 
+            className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
+            onClick={handleLogout}
+         >
             <LogOut className="h-4 w-4" />
             退出登录
          </Button>

@@ -1,0 +1,16 @@
+import { alovaInstance } from "..";
+
+// 订阅源列表
+export const getSubscriptionSources = alovaInstance.Get("/subscription-sources");
+
+// 创建订阅源
+export const createSubscriptionSource = (payload: Record<string, unknown>) =>
+  alovaInstance.Post("/subscription-sources", payload);
+
+// 同步订阅源
+export const syncSubscriptionSource = (id: string) =>
+  alovaInstance.Post(`/subscription-sources/${id}/sync`);
+
+// 同步记录
+export const getSubscriptionSyncs = (id: string, params?: Record<string, unknown>) =>
+  alovaInstance.Get(`/subscription-sources/${id}/syncs`, { params });

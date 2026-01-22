@@ -15,15 +15,22 @@ import { Dashboard } from "./pages/dashboard";
 import { NodeManagement } from "./pages/node-management";
 import { RuleManagement } from "./pages/rule-management";
 import { SubscriptionManagement } from "./pages/subscription-management";
+import { OutputManagement } from "./pages/output-management";
 import { UserManagement } from "./pages/user-management";
 import { Settings } from "./pages/settings";
 import { NotFound } from "./pages/not-found";
+import { Login } from "./pages/login";
+import { RequireAuth } from "./components/auth/require-auth";
 
 // 创建路由
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: (
+      <RequireAuth>
+        <App />
+      </RequireAuth>
+    ),
     errorElement: <NotFound />,
     children: [
       {
@@ -43,6 +50,10 @@ const router = createBrowserRouter([
         element: <SubscriptionManagement />,
       },
       {
+        path: "outputs",
+        element: <OutputManagement />,
+      },
+      {
         path: "users",
         element: <UserManagement />,
       },
@@ -51,6 +62,10 @@ const router = createBrowserRouter([
         element: <Settings />,
       },
     ]
+  },
+  {
+    path: "/auth/login",
+    element: <Login />,
   },
   {
     path: "/401",
