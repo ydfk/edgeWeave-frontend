@@ -7,6 +7,14 @@ export const getSubscriptionSources = alovaInstance.Get("/subscription-sources")
 export const createSubscriptionSource = (payload: Record<string, unknown>) =>
   alovaInstance.Post("/subscription-sources", payload);
 
+// 更新订阅源
+export const updateSubscriptionSource = (id: string, payload: Record<string, unknown>) =>
+  alovaInstance.Put(`/subscription-sources/${id}`, payload);
+
+// 删除订阅源
+export const deleteSubscriptionSource = (id: string) =>
+  alovaInstance.Delete(`/subscription-sources/${id}`);
+
 // 同步订阅源
 export const syncSubscriptionSource = (id: string) =>
   alovaInstance.Post(`/subscription-sources/${id}/sync`);

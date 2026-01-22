@@ -7,6 +7,13 @@ export const getOutputs = alovaInstance.Get("/outputs");
 export const createOutput = (payload: Record<string, unknown>) =>
   alovaInstance.Post("/outputs", payload);
 
+// 更新输出
+export const updateOutput = (id: string, payload: Record<string, unknown>) =>
+  alovaInstance.Put(`/outputs/${id}`, payload);
+
+// 删除输出
+export const deleteOutput = (id: string) => alovaInstance.Delete(`/outputs/${id}`);
+
 // 输出预览
 export const previewOutput = (id: string) => alovaInstance.Get(`/outputs/${id}/preview`);
 

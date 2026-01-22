@@ -7,6 +7,10 @@ export const getNodes = alovaInstance.Get("/nodes");
 export const createNode = (payload: Record<string, unknown>) =>
   alovaInstance.Post("/nodes", payload);
 
+// 更新节点
+export const updateNode = (id: string, payload: Record<string, unknown>) =>
+  alovaInstance.Put(`/nodes/${id}`, payload);
+
 // 删除节点
 export const deleteNode = (id: string) => alovaInstance.Delete(`/nodes/${id}`);
 

@@ -20,3 +20,6 @@ export const createRuleSet = (payload: Record<string, unknown>) =>
 // 更新规则集
 export const updateRuleSet = (id: string, payload: Record<string, unknown>) =>
   alovaInstance.Put(`/rule-sets/${id}`, payload);
+
+// 删除规则集
+export const deleteRuleSet = (id: string) => alovaInstance.Delete(`/rule-sets/${id}`);

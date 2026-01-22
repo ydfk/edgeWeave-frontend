@@ -1,8 +1,13 @@
 import { useState } from "react";
-import { useState } from "react";
-import { Rss, RefreshCw, ExternalLink, Calendar, Plus, Pencil, Trash2 } from "lucide-react";
+import { Rss, RefreshCw, ExternalLink, Calendar, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { useRequest } from "alova/client";
-import { getSubscriptionSources, syncSubscriptionSource, createSubscriptionSource } from "../lib/api/methods/subscriptions";
+import {
+  getSubscriptionSources,
+  syncSubscriptionSource,
+  createSubscriptionSource,
+  updateSubscriptionSource,
+  deleteSubscriptionSource
+} from "../lib/api/methods/subscriptions";
 import { Button } from "../components/ui/button";
 import { SimpleModal } from "../components/ui/simple-modal";
 import { Label } from "../components/ui/label";
@@ -15,8 +20,14 @@ export function SubscriptionManagement() {
 
   const { send: sync, loading: syncing } = useRequest(syncSubscriptionSource, { immediate: false });
   const { send: create, loading: creating } = useRequest(createSubscriptionSource, { immediate: false });
+  const { send: update, loading: updating } = useRequest(updateSubscriptionSource, { immediate: false });
+  const { send: remove, loading: removing } = useRequest(deleteSubscriptionSource, { immediate: false });
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     url: "",
@@ -33,6 +44,34 @@ export function SubscriptionManagement() {
     }
   };
 
+  const handleEdit = (sub: any, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingId(sub.id);
+    setFormData({
+      name: sub.name || "",
+      url: sub.url || "",
+      updateInterval: sub.updateInterval ? String(Math.floor(sub.updateInterval / 60)) : ""
+    });
+    setOpen(true);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!confirm("确定要删除该订阅源吗？")) return;
+    try {
+      await remove(id);
+      handleRefresh();
+    } catch (err: any) {
+      alert("删除失败: " + (err.message || "未知错误"));
+    }
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setEditingId(null);
+    setFormData({ name: "", url: "", updateInterval: "60" });
+  };
+
   const handleSubmit = async () => {
     if (!formData.url) {
       alert("请填写订阅 URL");
@@ -42,25 +81,117 @@ export function SubscriptionManagement() {
       const payload: any = { ...formData };
       if (payload.updateInterval) payload.updateInterval = parseInt(payload.updateInterval, 10) * 60;
       else delete payload.updateInterval;
-      
-      await create(payload);
-      setOpen(false);
-      setFormData({ name: "", url: "", updateInterval: "60" });
-      refresh();
+
+      if (editingId) {
+        await update(editingId, payload);
+      } else {
+        await create(payload);
+      }
+      handleClose();
+      handleRefresh();
     } catch (e: any) {
-      alert("创建失败: " + (e.message || "未知错误"));
+      alert((editingId ? "更新" : "创建") + "失败: " + (e.message || "未知错误"));
+    }
+  };
+
+  const filteredData = data.filter((sub: any) => 
+    (sub.name || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (sub.url || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleRefresh = () => {
+    setSelectedIds(new Set());
+    refresh();
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (filteredData.length === 0) return;
+    const allSelected = filteredData.every((sub: any) => selectedIds.has(sub.id));
+    const newSelected = new Set(selectedIds);
+    
+    if (allSelected) {
+      filteredData.forEach((sub: any) => newSelected.delete(sub.id));
+    } else {
+      filteredData.forEach((sub: any) => newSelected.add(sub.id));
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`确定要删除选中的 ${selectedIds.size} 个订阅源吗？`)) return;
+    
+    setIsBulkDeleting(true);
+    try {
+      const results = await Promise.allSettled(
+        Array.from(selectedIds).map((id) => deleteSubscriptionSource(id).send())
+      );
+      const success = results.filter((item) => item.status === "fulfilled").length;
+      const failed = results.length - success;
+      handleRefresh();
+      alert(`批量删除完成：成功 ${success}，失败 ${failed}`);
+    } catch (e: any) {
+      alert("批量删除失败: " + (e.message || "部分删除可能失败"));
+      handleRefresh();
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 animate-in fade-in duration-500 delay-200">
-       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">订阅管理</h1>
-        <div className="flex gap-2">
-           <Button variant="outline" size="sm" onClick={() => refresh()} disabled={loading}>
+       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">订阅管理</h1>
+            {filteredData.length > 0 && (
+                <div className="flex items-center gap-2 mt-1">
+                <input 
+                    type="checkbox" 
+                    id="select-all-subs"
+                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    checked={filteredData.length > 0 && filteredData.every((sub: any) => selectedIds.has(sub.id))}
+                    onChange={toggleSelectAll}
+                />
+                <label htmlFor="select-all-subs" className="text-sm text-muted-foreground cursor-pointer select-none">全选</label>
+                </div>
+            )}
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+             <Input 
+               placeholder="搜索订阅..." 
+               className="pl-9 h-9" 
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+             />
+          </div>
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             刷新
           </Button>
+          {selectedIds.size > 0 && (
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleBulkDelete} 
+              disabled={isBulkDeleting}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              批量删除 ({selectedIds.size})
+            </Button>
+          )}
           <Button size="sm" onClick={() => setOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             添加订阅
@@ -84,10 +215,28 @@ export function SubscriptionManagement() {
               <Rss className="h-12 w-12 mx-auto mb-4 opacity-20" />
               <p>暂无订阅源</p>
            </div>
+        ) : filteredData.length === 0 ? (
+           <div className="p-20 text-center text-muted-foreground">
+              <Search className="h-12 w-12 mx-auto mb-4 opacity-20" />
+              <p>未找到匹配的订阅源</p>
+              <Button variant="link" onClick={() => setSearchTerm("")}>清除搜索</Button>
+           </div>
         ) : (
-          data.map((sub: any, index: number) => (
-            <div key={sub.id || index} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-muted/30 transition-colors group">
+          filteredData.map((sub: any, index: number) => (
+            <div 
+              key={sub.id || index} 
+              className={`p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-muted/30 transition-colors group cursor-pointer ${selectedIds.has(sub.id) ? 'bg-muted/50' : ''}`}
+              onClick={() => toggleSelect(sub.id)}
+            >
               <div className="flex items-start gap-4">
+                <div className="flex items-center self-center" onClick={(e) => e.stopPropagation()}>
+                    <input 
+                        type="checkbox" 
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        checked={selectedIds.has(sub.id)}
+                        onChange={() => toggleSelect(sub.id)}
+                    />
+                </div>
                 <div className="h-10 w-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
                   <Rss className="h-5 w-5" />
                 </div>
@@ -125,21 +274,22 @@ export function SubscriptionManagement() {
                       </a>
                     </Button>
                     <div className="w-px h-4 bg-border mx-1"></div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 text-muted-foreground"
-                      disabled
-                      title="待后端支持"
+                      onClick={(e) => handleEdit(sub, e)}
+                      title="编辑订阅源"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 text-muted-foreground"
-                      disabled
-                      title="待后端支持"
+                      onClick={(e) => handleDelete(e, sub.id)}
+                      disabled={removing}
+                      title="删除订阅源"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -152,14 +302,14 @@ export function SubscriptionManagement() {
 
       <SimpleModal
         isOpen={open}
-        onClose={() => setOpen(false)}
-        title="添加订阅源"
-        description="添加一个新的订阅链接以获取节点"
+        onClose={handleClose}
+        title={editingId ? "编辑订阅源" : "添加订阅源"}
+        description={editingId ? "修改现有订阅信息" : "添加一个新的订阅链接以获取节点"}
         footer={
           <>
-            <Button variant="outline" onClick={() => setOpen(false)}>取消</Button>
-            <Button onClick={handleSubmit} disabled={creating}>
-              {creating ? "添加中..." : "添加"}
+            <Button variant="outline" onClick={handleClose}>取消</Button>
+            <Button onClick={handleSubmit} disabled={creating || updating}>
+              {creating || updating ? "提交中..." : "提交"}
             </Button>
           </>
         }
