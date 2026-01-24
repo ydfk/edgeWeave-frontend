@@ -57,7 +57,10 @@ export function RuleManagement() {
   const [tplSearch, setTplSearch] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
 
-  const filteredData = data.filter(
+  const ruleSetList = Array.isArray(data) ? data : data?.data || []
+  const templateList = Array.isArray(templates) ? templates : templates?.data || []
+
+  const filteredData = ruleSetList.filter(
     (rule: any) =>
       (rule.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (rule.description || "")
@@ -242,8 +245,8 @@ export function RuleManagement() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {loading && data.length === 0 ? (
+      <div className="card-block p-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {loading && ruleSetList.length === 0 ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
@@ -261,7 +264,7 @@ export function RuleManagement() {
               重试
             </Button>
           </div>
-        ) : data.length === 0 ? (
+          ) : ruleSetList.length === 0 ? (
           <div className="col-span-full py-20 text-center text-muted-foreground border border-dashed rounded-xl">
             <Workflow className="h-12 w-12 mx-auto mb-4 opacity-20" />
             <p>暂无规则集，开始配置您的第一个规则</p>
@@ -409,10 +412,10 @@ export function RuleManagement() {
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="">不使用模板</option>
-              {templates
-                ?.filter(
-                  (tpl: any) =>
-                    (tpl.name || "")
+                      {templateList
+                        ?.filter(
+                          (tpl: any) =>
+                            (tpl.name || "")
                       .toLowerCase()
                       .includes(tplSearch.toLowerCase()) ||
                     (tpl.id || "")

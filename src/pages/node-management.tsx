@@ -48,9 +48,12 @@ export function NodeManagement() {
     subscriptionSourceId: "",
   })
   const [subSearch, setSubSearch] = useState("")
+  const subSourceList = Array.isArray(subSources) ? subSources : subSources?.data || []
   const [searchTerm, setSearchTerm] = useState("")
 
-  const filteredData = data.filter(
+  const nodeList = Array.isArray(data) ? data : data?.data || []
+
+  const filteredData = nodeList.filter(
     (node: any) =>
       (node.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (node.type || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -220,7 +223,7 @@ export function NodeManagement() {
               节点列表
             </h2>
             <span className="text-sm text-muted-foreground">
-              共 {data?.length || 0} 个节点
+               共 {nodeList.length || 0} 个节点
             </span>
           </div>
 
@@ -231,14 +234,14 @@ export function NodeManagement() {
                 重试
               </Button>
             </div>
-          ) : loading && data.length === 0 ? (
+          ) : loading && nodeList.length === 0 ? (
             <div className="py-20 text-center space-y-4">
               <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
               <p className="text-muted-foreground animate-pulse">
                 正在获取节点状态...
               </p>
             </div>
-          ) : data.length === 0 ? (
+          ) : nodeList.length === 0 ? (
             <div className="py-20 text-center text-muted-foreground">
               <Server className="h-12 w-12 mx-auto mb-4 opacity-20" />
               <p>暂无节点，请点击右上角创建</p>
@@ -421,7 +424,7 @@ export function NodeManagement() {
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="">无关联订阅源</option>
-              {subSources
+              {subSourceList
                 ?.filter(
                   (sub: any) =>
                     (sub.name || "")

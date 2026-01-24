@@ -1,4 +1,5 @@
-import { Search, Bell, Menu } from "lucide-react"
+import { Search, Bell, Menu, LogOut } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import { Button } from "../ui/button"
 import { ThemeToggle } from "../theme-toggle"
 
@@ -7,6 +8,16 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    // 清除本地存储的认证信息
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    // 跳转到登录页
+    navigate('/auth/login')
+  }
+
   return (
     <header className="h-16 sticky top-0 z-40 w-full px-4 md:px-6 flex items-center gap-4 bg-background/60 backdrop-blur-md border-b border-border/40 transition-all duration-300">
       {/* Mobile Menu Trigger */}
@@ -47,7 +58,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
         <div className="h-6 w-px bg-border/60 mx-1 hidden sm:block" />
 
-        <div className="flex items-center gap-3 pl-1 cursor-pointer group">
+        <div className="flex items-center gap-3 pl-1 cursor-pointer group hover:bg-secondary/50 p-1 pr-2 rounded-full transition-all">
           <div className="flex flex-col items-end hidden sm:flex">
             <span className="text-sm font-semibold leading-none text-foreground/90 group-hover:text-primary transition-colors">Admin</span>
             <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">System</span>
@@ -56,6 +67,16 @@ export function Header({ onMenuClick }: HeaderProps) {
             AD
           </div>
         </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleLogout}
+          className="h-10 w-10 ml-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-300"
+          title="退出登录"
+        >
+          <LogOut className="h-5 w-5" />
+        </Button>
       </div>
     </header>
   )

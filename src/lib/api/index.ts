@@ -12,12 +12,17 @@ const { onAuthRequired, onResponseRefreshToken } =
   createServerTokenAuthentication({
     async login(response) {
       const data = await response.clone().json()
-
-      localStorage.setItem("token", data.token)
+      const token = data?.data?.token
+      if (token) {
+        localStorage.setItem("token", token)
+      }
     },
 
     assignToken: (method) => {
-      method.config.headers.Authorization = localStorage.getItem("token")
+      const token = localStorage.getItem("token")
+      if (token) {
+        method.config.headers.Authorization = `Bearer ${token}`
+      }
     },
 
     logout() {

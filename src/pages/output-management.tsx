@@ -67,6 +67,10 @@ export function OutputManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [showSelectedOnly, setShowSelectedOnly] = useState(false)
 
+  const outputList = Array.isArray(data) ? data : data?.data || []
+  const ruleSetList = Array.isArray(ruleSets) ? ruleSets : ruleSets?.data || []
+  const nodeList = Array.isArray(nodes) ? nodes : nodes?.data || []
+
   const selectedNodeIds: string[] = (() => {
     try {
       return JSON.parse(formData.nodeIds) || []
@@ -84,8 +88,8 @@ export function OutputManagement() {
   }
 
   const handleSelectAll = () => {
-    if (!nodes) return
-    const nodesToSelect = nodes.filter(
+    if (nodeList.length === 0) return
+    const nodesToSelect = nodeList.filter(
       (node: any) =>
         (node.name || "").toLowerCase().includes(nodeSearch.toLowerCase()) ||
         (node.type || "").toLowerCase().includes(nodeSearch.toLowerCase()) ||
@@ -180,7 +184,7 @@ export function OutputManagement() {
     }
   }
 
-  const filteredData = data.filter(
+  const filteredData = outputList.filter(
     (output: any) =>
       (output.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       (output.description || "")
@@ -311,8 +315,8 @@ export function OutputManagement() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {loading && data.length === 0 ? (
+      <div className="card-block p-6 grid gap-6 md:grid-cols-2">
+        {loading && outputList.length === 0 ? (
           Array.from({ length: 2 }).map((_, i) => (
             <div
               key={i}
@@ -332,7 +336,7 @@ export function OutputManagement() {
               重试
             </Button>
           </div>
-        ) : data.length === 0 ? (
+        ) : outputList.length === 0 ? (
           <div className="col-span-full py-20 text-center text-muted-foreground border-2 border-dashed border-muted rounded-xl">
             <Download className="h-12 w-12 mx-auto mb-4 opacity-20" />
             <p>暂无输出配置</p>
@@ -487,7 +491,7 @@ export function OutputManagement() {
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="">不绑定规则集</option>
-              {ruleSets
+              {ruleSetList
                 ?.filter(
                   (rs: any) =>
                     (rs.name || "")
@@ -554,13 +558,13 @@ export function OutputManagement() {
               className="mb-1 h-8 text-xs"
             />
             <div className="h-48 overflow-y-auto rounded-md border border-input bg-background p-2 scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-muted">
-              {!nodes || nodes.length === 0 ? (
+              {nodeList.length === 0 ? (
                 <div className="text-sm text-muted-foreground p-2 text-center">
                   无可用节点
                 </div>
               ) : (
                 (() => {
-                  const filtered = nodes.filter((node: any) => {
+                  const filtered = nodeList.filter((node: any) => {
                     const match =
                       (node.name || "")
                         .toLowerCase()

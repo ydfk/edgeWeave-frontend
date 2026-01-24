@@ -59,6 +59,13 @@ export function SubscriptionManagement() {
     updateInterval: "60",
   })
 
+  const sourceList = Array.isArray(data) ? data : data?.data || []
+  const filteredData = sourceList.filter(
+    (sub: any) =>
+      (sub.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (sub.url || "").toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
   const handleSync = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     try {
@@ -123,12 +130,6 @@ export function SubscriptionManagement() {
       )
     }
   }
-
-  const filteredData = data.filter(
-    (sub: any) =>
-      (sub.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (sub.url || "").toLowerCase().includes(searchTerm.toLowerCase()),
-  )
 
   const handleRefresh = () => {
     setSelectedIds(new Set())
@@ -254,7 +255,7 @@ export function SubscriptionManagement() {
       </div>
 
       <div className="card-block divide-y divide-border/40 overflow-hidden">
-        {loading && data.length === 0 ? (
+              {loading && sourceList.length === 0 ? (
           <div className="p-8 text-center space-y-4">
             <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
             <p className="text-muted-foreground animate-pulse">
@@ -268,7 +269,7 @@ export function SubscriptionManagement() {
               重试
             </Button>
           </div>
-        ) : data.length === 0 ? (
+              ) : sourceList.length === 0 ? (
           <div className="p-20 text-center text-muted-foreground">
             <Rss className="h-12 w-12 mx-auto mb-4 opacity-20" />
             <p>暂无订阅源</p>
