@@ -5,6 +5,7 @@ import {
   Zap,
   Workflow as WorkflowIcon,
 } from "lucide-react"
+import { Card, CardBody, CardHeader } from "@heroui/react"
 import { Button } from "../components/ui/button"
 
 export function Dashboard() {
@@ -53,47 +54,49 @@ export function Dashboard() {
             trend: "0",
           },
         ].map((stat, i) => (
-          <div
+          <Card
             key={i}
-            className="floating-card p-6 flex flex-col justify-between h-[140px] relative overflow-hidden group"
+            className="h-[140px] relative overflow-hidden group border-none shadow-md hover:shadow-lg transition-all"
           >
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
-               <stat.icon className={`h-24 w-24 ${stat.color}`} />
-            </div>
-
-            <div className="flex items-center justify-between z-10">
-              <p className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </p>
-              <div className={`p-2 rounded-lg ${stat.bg}`}>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+            <CardBody className="p-6 flex flex-col justify-between overflow-visible">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500 pointer-events-none">
+                 <stat.icon className={`h-24 w-24 ${stat.color}`} />
               </div>
-            </div>
-            <div className="z-10">
-              <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1 flex items-center">
-                <span className={`${stat.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} font-medium mr-1`}>
-                   {stat.trend.startsWith("+") ? "↑" : "↓"} {stat.trend}
-                </span>
-                较上周
-              </p>
-            </div>
-          </div>
+
+              <div className="flex items-center justify-between z-10">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {stat.title}
+                </p>
+                <div className={`p-2 rounded-lg ${stat.bg}`}>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
+              </div>
+              <div className="z-10">
+                <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
+                <p className="text-xs text-muted-foreground mt-1 flex items-center">
+                  <span className={`${stat.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} font-medium mr-1`}>
+                     {stat.trend.startsWith("+") ? "↑" : "↓"} {stat.trend}
+                  </span>
+                  较上周
+                </p>
+              </div>
+            </CardBody>
+          </Card>
         ))}
       </div>
 
       {/* Content Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 reveal reveal-delay-200">
         {/* Main Chart Placeholder */}
-        <div className="col-span-4 card-block p-6">
-          <div className="flex flex-col space-y-1 mb-6">
+        <Card className="col-span-4 p-6 shadow-sm border-none">
+          <CardHeader className="p-0 pb-6 flex-col items-start gap-1">
             <h3 className="text-lg font-bold tracking-tight flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
               流量趋势
             </h3>
             <p className="text-sm text-muted-foreground">实时网络数据吞吐量监控</p>
-          </div>
-          <div className="h-[300px] w-full bg-gradient-to-b from-primary/5 to-transparent rounded-xl border border-primary/10 flex items-center justify-center relative overflow-hidden group">
+          </CardHeader>
+          <CardBody className="p-0 h-[300px] w-full bg-gradient-to-b from-primary/5 to-transparent rounded-xl border border-primary/10 flex items-center justify-center relative overflow-hidden group">
             {/* Fake Chart Wave */}
             <div className="absolute bottom-0 left-0 right-0 h-32 bg-primary/10 blur-3xl opacity-50 group-hover:h-40 transition-all duration-700"></div>
             <div className="text-muted-foreground/50 flex flex-col items-center z-10">
@@ -102,16 +105,18 @@ export function Dashboard() {
               </div>
               <span className="font-medium text-sm">图表可视化区域</span>
             </div>
-          </div>
-        </div>
+          </CardBody>
+        </Card>
 
         {/* Recent Activity */}
-        <div className="col-span-3 card-block p-0 overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-border/40 bg-muted/20">
-            <h3 className="font-bold tracking-tight">最近活动</h3>
-            <p className="text-sm text-muted-foreground">系统操作日志审计</p>
-          </div>
-          <div className="p-0 flex-1 overflow-y-auto">
+        <Card className="col-span-3 overflow-hidden flex flex-col shadow-sm border-none">
+          <CardHeader className="p-6 border-b border-border/40 bg-muted/20">
+            <div className="flex flex-col gap-1">
+              <h3 className="font-bold tracking-tight">最近活动</h3>
+              <p className="text-sm text-muted-foreground">系统操作日志审计</p>
+            </div>
+          </CardHeader>
+          <CardBody className="p-0 flex-1 overflow-y-auto">
             <div className="divide-y divide-border/40">
               {[
                 { time: "10:24", user: "Admin", action: "更新了节点配置 #001", type: "update" },
@@ -138,29 +143,32 @@ export function Dashboard() {
                 </div>
               ))}
             </div>
-          </div>
+          </CardBody>
           <div className="p-3 border-t border-border/40 bg-muted/20 text-center">
             <Button variant="link" size="sm" className="text-xs text-muted-foreground h-auto p-0">查看全部日志</Button>
           </div>
-        </div>
+        </Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3 reveal reveal-delay-300">
         {[1, 2, 3].map((i) => (
-          <div
+          <Card
             key={i}
-            className="card-block p-4 flex items-center gap-4 cursor-pointer hover:border-primary/40 hover:shadow-md transition-all group"
+            isPressable
+            className="p-4 flex flex-row items-center gap-4 hover:border-primary/40 hover:shadow-md transition-all group shadow-sm"
           >
-            <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-              <Zap className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">快捷操作 {i}</h3>
-              <p className="text-xs text-muted-foreground">
-                一键执行预设任务
-              </p>
-            </div>
-          </div>
+             <CardBody className="flex flex-row items-center gap-4 p-0 overflow-visible">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                <Zap className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">快捷操作 {i}</h3>
+                <p className="text-xs text-muted-foreground">
+                  一键执行预设任务
+                </p>
+              </div>
+            </CardBody>
+          </Card>
         ))}
       </div>
     </div>

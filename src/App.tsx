@@ -2,6 +2,7 @@ import { ThemeProvider } from "./components/theme-provider"
 import { MainLayout } from "./components/layout/main-layout"
 import { useEffect } from "react"
 import { useLocation } from "react-router-dom"
+import { HeroUIProvider } from "@heroui/react"
 
 function App() {
   const location = useLocation()
@@ -31,7 +32,9 @@ function App() {
 
   return (
     <ThemeProvider>
-      <MainLayout />
+      <HeroUIProvider>
+        <MainLayout />
+      </HeroUIProvider>
     </ThemeProvider>
   )
 }

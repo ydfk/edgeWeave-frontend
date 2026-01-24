@@ -1,7 +1,15 @@
 import { Search, Bell, Menu, LogOut } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "../ui/button"
+import { Input } from "../ui/input"
 import { ThemeToggle } from "../theme-toggle"
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Avatar,
+} from "@heroui/react"
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -32,14 +40,20 @@ export function Header({ onMenuClick }: HeaderProps) {
 
       {/* Global Search */}
       <div className="flex-1 flex max-w-md">
-         <div className="relative w-full hidden sm:block group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 transition-colors group-hover:text-primary" />
-            <input
-              type="text"
-              placeholder="搜索资源..."
-              className="flex h-10 w-full rounded-full border border-border/50 bg-secondary/50 pl-10 pr-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all placeholder:text-muted-foreground/50"
-            />
-          </div>
+         <Input
+           placeholder="搜索资源..."
+           startContent={<Search className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />}
+           className="hidden sm:flex"
+           classNames={{
+             base: "max-w-full sm:max-w-[20rem] h-10",
+             mainWrapper: "h-full",
+             input: "text-small",
+             inputWrapper: "h-full font-normal text-default-500 bg-secondary/50 dark:bg-default-500/20 rounded-full border border-border/50",
+           }}
+           isClearable
+           radius="full"
+           size="sm"
+         />
       </div>
 
       <div className="flex-1" />
@@ -58,25 +72,39 @@ export function Header({ onMenuClick }: HeaderProps) {
 
         <div className="h-6 w-px bg-border/60 mx-1 hidden sm:block" />
 
-        <div className="flex items-center gap-3 pl-1 cursor-pointer group hover:bg-secondary/50 p-1 pr-2 rounded-full transition-all">
-          <div className="flex flex-col items-end hidden sm:flex">
-            <span className="text-sm font-semibold leading-none text-foreground/90 group-hover:text-primary transition-colors">Admin</span>
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">System</span>
-          </div>
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center font-bold text-xs ring-2 ring-transparent group-hover:ring-primary/20 transition-all shadow-md">
-            AD
-          </div>
-        </div>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleLogout}
-          className="h-10 w-10 ml-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-300"
-          title="退出登录"
-        >
-          <LogOut className="h-5 w-5" />
-        </Button>
+        <Dropdown placement="bottom-end">
+          <DropdownTrigger>
+            <div className="flex items-center gap-3 pl-1 cursor-pointer group hover:bg-secondary/50 p-1 pr-2 rounded-full transition-all">
+              <div className="flex flex-col items-end hidden sm:flex">
+                <span className="text-sm font-semibold leading-none text-foreground/90 group-hover:text-primary transition-colors">Admin</span>
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">System</span>
+              </div>
+              <Avatar
+                isBordered
+                className="transition-transform"
+                color="primary"
+                name="AD"
+                size="sm"
+                src=""
+              />
+            </div>
+          </DropdownTrigger>
+          <DropdownMenu aria-label="Profile Actions" variant="flat">
+            <DropdownItem key="profile" className="h-14 gap-2">
+              <p className="font-semibold">Signed in as</p>
+              <p className="font-semibold">admin@example.com</p>
+            </DropdownItem>
+            <DropdownItem key="settings" onClick={() => navigate('/settings')}>
+              My Settings
+            </DropdownItem>
+            <DropdownItem key="help_and_feedback">
+              Help & Feedback
+            </DropdownItem>
+            <DropdownItem key="logout" color="danger" onPress={handleLogout} startContent={<LogOut className="h-4 w-4" />}>
+              Log Out
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
       </div>
     </header>
   )

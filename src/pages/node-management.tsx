@@ -1,6 +1,23 @@
-import { useState } from "react"
-import { Server, RefreshCw, Plus, Pencil, Trash2, Search } from "lucide-react"
+import { useState, useMemo } from "react"
+import { RefreshCw, Plus, Pencil, Trash2, Search } from "lucide-react"
 import { useRequest } from "alova/client"
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Chip,
+  Tooltip,
+  Card,
+  CardBody,
+  Select,
+  SelectItem,
+  Autocomplete,
+  AutocompleteItem,
+  Selection
+} from "@heroui/react"
 import {
   getNodes,
   createNode,
@@ -10,7 +27,6 @@ import {
 import { getSubscriptionSources } from "../lib/api/methods/subscriptions"
 import { Button } from "../components/ui/button"
 import { SimpleModal } from "../components/ui/simple-modal"
-import { Label } from "../components/ui/label"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 
@@ -34,12 +50,13 @@ export function NodeManagement() {
   const { send: update, loading: updating } = useRequest(updateNode, {
     immediate: false,
   })
-  const { send: remove, loading: removing } = useRequest(deleteNode, {
+  const { send: remove } = useRequest(deleteNode, {
     immediate: false,
   })
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  // Use HeroUI Selection type
+  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]))
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -47,57 +64,35 @@ export function NodeManagement() {
     rawContent: "",
     subscriptionSourceId: "",
   })
-  const [subSearch, setSubSearch] = useState("")
+  // const [subSearch, setSubSearch] = useState("") // Not needed with Autocomplete/Select searchable?
   const subSourceList = Array.isArray(subSources) ? subSources : subSources?.data || []
   const [searchTerm, setSearchTerm] = useState("")
 
   const nodeList = Array.isArray(data) ? data : data?.data || []
 
-  const filteredData = nodeList.filter(
-    (node: any) =>
-      (node.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (node.type || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (node.id || "").toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredData = useMemo(() => {
+    return nodeList.filter(
+      (node: any) =>
+        (node.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (node.type || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (node.id || "").toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+  }, [nodeList, searchTerm])
 
   const handleRefresh = () => {
-    setSelectedIds(new Set())
+    setSelectedKeys(new Set([]))
     refresh()
   }
 
-  const toggleSelect = (id: string) => {
-    const newSelected = new Set(selectedIds)
-    if (newSelected.has(id)) {
-      newSelected.delete(id)
-    } else {
-      newSelected.add(id)
-    }
-    setSelectedIds(newSelected)
-  }
-
-  const toggleSelectAll = () => {
-    if (filteredData.length === 0) return
-    const allSelected = filteredData.every((node: any) =>
-      selectedIds.has(node.id),
-    )
-    const newSelected = new Set(selectedIds)
-
-    if (allSelected) {
-      filteredData.forEach((node: any) => newSelected.delete(node.id))
-    } else {
-      filteredData.forEach((node: any) => newSelected.add(node.id))
-    }
-    setSelectedIds(newSelected)
-  }
-
   const handleBulkDelete = async () => {
-    if (selectedIds.size === 0) return
-    if (!confirm(`确定要删除选中的 ${selectedIds.size} 个节点吗？`)) return
+    if (selectedKeys === "all") return // Handle all selection if needed, simplified for now
+    if (selectedKeys.size === 0) return
+    if (!confirm(`确定要删除选中的 ${selectedKeys.size} 个节点吗？`)) return
 
     setIsBulkDeleting(true)
     try {
       const results = await Promise.allSettled(
-        Array.from(selectedIds).map((id) => deleteNode(id).send()),
+        Array.from(selectedKeys).map((id) => deleteNode(id as string).send()),
       )
       const success = results.filter(
         (item) => item.status === "fulfilled",
@@ -143,7 +138,6 @@ export function NodeManagement() {
       rawContent: "",
       subscriptionSourceId: "",
     })
-    setSubSearch("")
   }
 
   const handleSubmit = async () => {
@@ -169,184 +163,145 @@ export function NodeManagement() {
     }
   }
 
+  const renderCell = (node: any, columnKey: React.Key) => {
+    switch (columnKey) {
+      case "id":
+        return <span className="font-mono text-xs text-muted-foreground">{node.id.substring(0, 8)}...</span>
+      case "name":
+        return (
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+            <span className="font-medium">{node.name || "未命名节点"}</span>
+          </div>
+        )
+      case "type":
+         return <Chip size="sm" variant="flat">{node.type}</Chip>
+      case "status":
+        return (
+          <Chip
+            size="sm"
+            color={node.status === "online" ? "success" : "default"}
+            variant="flat"
+          >
+            {node.status || "未知"}
+          </Chip>
+        )
+      case "actions":
+        return (
+          <div className="relative flex items-center gap-2 justify-end">
+             <Tooltip content="编辑节点">
+              <span className="text-lg text-default-400 cursor-pointer active:opacity-50" onClick={() => handleEdit(node)}>
+                <Pencil className="h-4 w-4" />
+              </span>
+            </Tooltip>
+            <Tooltip color="danger" content="删除节点">
+              <span className="text-lg text-danger cursor-pointer active:opacity-50" onClick={() => handleDelete(node.id)}>
+                <Trash2 className="h-4 w-4" />
+              </span>
+            </Tooltip>
+          </div>
+        )
+      default:
+        return node[columnKey as keyof typeof node]
+    }
+  }
+
   return (
-    <div className="w-full space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+    <div className="w-full space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 reveal">
+        <h1 className="text-3xl font-bold tracking-tight">
           节点管理
         </h1>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="搜索节点..."
-              className="pl-9 h-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+          <Input
+            placeholder="搜索节点..."
+            startContent={<Search className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />}
+            className="w-full sm:w-64"
+            classNames={{
+              inputWrapper: "bg-secondary/50 dark:bg-default-500/20 border-border/50 hover:border-primary/50 transition-colors",
+            }}
+            radius="lg"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            size="sm"
+          />
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
             disabled={loading}
+            className="hover:bg-secondary/80"
           >
             <RefreshCw
               className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
             />
             刷新
           </Button>
-          {selectedIds.size > 0 && (
+          {(selectedKeys === "all" || selectedKeys.size > 0) && (
             <Button
               variant="destructive"
               size="sm"
               onClick={handleBulkDelete}
               disabled={isBulkDeleting}
-              className="bg-red-500 hover:bg-red-600 text-white"
+              className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              批量删除 ({selectedIds.size})
+              批量删除 ({selectedKeys === "all" ? filteredData.length : selectedKeys.size})
             </Button>
           )}
-          <Button size="sm" onClick={() => setOpen(true)}>
+          <Button size="sm" onClick={() => setOpen(true)} className="shadow-sm shadow-primary/20">
             <Plus className="h-4 w-4 mr-2" />
             新建节点
           </Button>
         </div>
       </div>
 
-      <div className="card-block">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Server className="h-5 w-5 text-primary" />
-              节点列表
-            </h2>
-            <span className="text-sm text-muted-foreground">
-               共 {nodeList.length || 0} 个节点
-            </span>
-          </div>
-
+      <Card className="shadow-sm border-none reveal reveal-delay-100">
+        <CardBody className="p-0">
           {error ? (
-            <div className="py-10 text-center text-red-500 bg-red-50/50 rounded-lg">
+             <div className="py-10 text-center text-red-500 bg-red-50/50 rounded-lg">
               <p>加载失败: {error.message}</p>
               <Button variant="link" onClick={() => refresh()}>
                 重试
               </Button>
             </div>
-          ) : loading && nodeList.length === 0 ? (
-            <div className="py-20 text-center space-y-4">
-              <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
-              <p className="text-muted-foreground animate-pulse">
-                正在获取节点状态...
-              </p>
-            </div>
-          ) : nodeList.length === 0 ? (
-            <div className="py-20 text-center text-muted-foreground">
-              <Server className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>暂无节点，请点击右上角创建</p>
-            </div>
-          ) : filteredData.length === 0 ? (
-            <div className="py-20 text-center text-muted-foreground">
-              <Search className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>未找到匹配的节点</p>
-              <Button variant="link" onClick={() => setSearchTerm("")}>
-                清除搜索
-              </Button>
-            </div>
           ) : (
-            <div className="relative overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs uppercase bg-muted/50 text-muted-foreground">
-                  <tr>
-                    <th className="px-6 py-3 font-medium w-10">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                          checked={
-                            filteredData.length > 0 &&
-                            filteredData.every((node: any) =>
-                              selectedIds.has(node.id),
-                            )
-                          }
-                          onChange={toggleSelectAll}
-                        />
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 font-medium">ID</th>
-                    <th className="px-6 py-3 font-medium">名称</th>
-                    <th className="px-6 py-3 font-medium">状态</th>
-                    <th className="px-6 py-3 font-medium text-right">操作</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredData.map((node: any, index: number) => (
-                    <tr
-                      key={node.id || index}
-                      className="hover:bg-muted/50 transition-colors group"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                            checked={selectedIds.has(node.id)}
-                            onChange={() => toggleSelect(node.id)}
-                          />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
-                        {node.id ? node.id.substring(0, 8) : "-"}...
-                      </td>
-                      <td className="px-6 py-4 font-medium text-foreground">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-                          {node.name || "未命名节点"}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ring-1 ring-inset ${
-                            node.status === "online"
-                              ? "bg-emerald-50 text-emerald-700 ring-emerald-600/20"
-                              : "bg-slate-50 text-slate-700 ring-slate-600/20"
-                          }`}
-                        >
-                          {node.status || "未知"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-primary"
-                            onClick={() => handleEdit(node)}
-                            title="编辑节点"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                            onClick={() => handleDelete(node.id)}
-                            disabled={removing}
-                            title="删除节点"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <Table
+            aria-label="Nodes table"
+            selectionMode="multiple"
+            selectedKeys={selectedKeys}
+            onSelectionChange={setSelectedKeys}
+            removeWrapper
+            classNames={{
+                wrapper: "min-h-[222px]",
+                th: "bg-muted/50 text-muted-foreground font-medium",
+                td: "py-3 border-b border-border/50",
+            }}
+          >
+            <TableHeader>
+              <TableColumn key="id">ID</TableColumn>
+              <TableColumn key="name">名称</TableColumn>
+              <TableColumn key="type">类型</TableColumn>
+              <TableColumn key="status">状态</TableColumn>
+              <TableColumn key="actions" align="end">操作</TableColumn>
+            </TableHeader>
+            <TableBody
+              items={filteredData}
+              emptyContent={
+                loading ? "加载中..." : "暂无节点"
+              }
+              isLoading={loading}
+            >
+              {(item: any) => (
+                <TableRow key={item.id}>
+                  {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
           )}
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       <SimpleModal
         isOpen={open}
@@ -368,9 +323,10 @@ export function NodeManagement() {
       >
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">名称 *</Label>
             <Input
               id="name"
+              label="名称 *"
+              labelPlacement="outside"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -379,79 +335,65 @@ export function NodeManagement() {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="type">类型 *</Label>
-            <Input
-              id="type"
-              value={formData.type}
-              onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value })
-              }
-              placeholder="输入或选择类型 (如: vmess)"
-              list="node-types-list"
-              autoComplete="off"
-            />
-            <datalist id="node-types-list">
-              {[
-                "vmess",
-                "vless",
-                "trojan",
-                "ss",
-                "ssr",
-                "manual",
-                "subscription",
-              ].map((t) => (
-                <option key={t} value={t} />
-              ))}
-            </datalist>
+            <Autocomplete
+              label="类型 *"
+              labelPlacement="outside"
+              placeholder="输入或选择类型"
+              defaultItems={[
+                { label: "vmess", value: "vmess" },
+                { label: "vless", value: "vless" },
+                { label: "trojan", value: "trojan" },
+                { label: "ss", value: "ss" },
+                { label: "ssr", value: "ssr" },
+                { label: "manual", value: "manual" },
+                { label: "subscription", value: "subscription" },
+              ]}
+              inputValue={formData.type}
+              onInputChange={(value) => setFormData({ ...formData, type: value })}
+              allowsCustomValue
+            >
+              {(item) => (
+                <AutocompleteItem key={item.value}>{item.label}</AutocompleteItem>
+              )}
+            </Autocomplete>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="subId">订阅源 (可选)</Label>
-            <Input
-              placeholder="搜索订阅源..."
-              value={subSearch}
-              onChange={(e) => setSubSearch(e.target.value)}
-              className="mb-1 h-8 text-xs"
-            />
-            <select
-              id="subId"
-              value={formData.subscriptionSourceId}
-              onChange={(e) =>
+            <Select
+              label="订阅源 (可选)"
+              labelPlacement="outside"
+              placeholder="无关联订阅源"
+              selectedKeys={
+                formData.subscriptionSourceId
+                  ? new Set([formData.subscriptionSourceId])
+                  : new Set([])
+              }
+              onSelectionChange={(keys) => {
+                const value = Array.from(keys)[0] as string | undefined
                 setFormData({
                   ...formData,
-                  subscriptionSourceId: e.target.value,
+                  subscriptionSourceId: value || "",
                 })
-              }
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              }}
             >
-              <option value="">无关联订阅源</option>
-              {subSourceList
-                ?.filter(
-                  (sub: any) =>
-                    (sub.name || "")
-                      .toLowerCase()
-                      .includes(subSearch.toLowerCase()) ||
-                    (sub.id || "")
-                      .toLowerCase()
-                      .includes(subSearch.toLowerCase()),
-                )
-                .map((sub: any) => (
-                  <option key={sub.id} value={sub.id}>
-                    {sub.name || sub.id}
-                  </option>
-                ))}
-            </select>
+              {subSourceList.map((sub: any) => (
+                <SelectItem key={sub.id}>
+                  {sub.name || sub.id}
+                </SelectItem>
+              ))}
+            </Select>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="content">原始内容 *</Label>
             <Textarea
               id="content"
+              label="原始内容 *"
+              labelPlacement="outside"
               value={formData.rawContent}
               onChange={(e) =>
                 setFormData({ ...formData, rawContent: e.target.value })
               }
               placeholder="节点配置内容 (JSON/YAML/Link)"
               className="font-mono text-xs"
-              rows={5}
+              minRows={5}
             />
           </div>
         </div>

@@ -1,8 +1,10 @@
 import { useState } from "react"
 import { useRequest } from "alova/client"
 import { useNavigate, useLocation } from "react-router-dom"
+import { Card, CardBody } from "@heroui/react"
 import { login } from "../lib/api/methods/user"
 import { Button } from "../components/ui/button"
+import { Input } from "../components/ui/input"
 import { Lock, User, AlertCircle, Workflow, ArrowRight } from "lucide-react"
 
 export function Login() {
@@ -51,54 +53,37 @@ export function Login() {
           <p className="text-muted-foreground">登录以管理您的节点与工作流</p>
         </div>
 
-        <div className="bg-card border text-card-foreground shadow-xl rounded-2xl overflow-hidden backdrop-blur-sm">
-          <div className="p-8 space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  htmlFor="username"
-                >
-                  账号
-                </label>
-                <div className="relative">
-                  <div className="absolute left-3 top-2.5 text-muted-foreground">
-                    <User className="h-4 w-4" />
-                  </div>
-                  <input
-                    id="username"
-                    type="text"
-                    placeholder="请输入用户名"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-9 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    autoComplete="username"
-                  />
-                </div>
-              </div>
+        <Card className="w-full shadow-xl rounded-2xl backdrop-blur-sm bg-card/80">
+          <CardBody className="p-8 space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <Input
+                label="账号"
+                placeholder="请输入用户名"
+                startContent={<User className="h-4 w-4 text-muted-foreground" />}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                variant="bordered"
+                radius="lg"
+                classNames={{
+                  inputWrapper: "bg-background/50 border-input hover:border-primary/50 transition-colors",
+                }}
+              />
 
-              <div className="space-y-2">
-                <label
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  htmlFor="password"
-                >
-                  密码
-                </label>
-                <div className="relative">
-                  <div className="absolute left-3 top-2.5 text-muted-foreground">
-                    <Lock className="h-4 w-4" />
-                  </div>
-                  <input
-                    id="password"
-                    type="password"
-                    placeholder="请输入密码"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-9 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                  />
-                </div>
-              </div>
+              <Input
+                label="密码"
+                type="password"
+                placeholder="请输入密码"
+                startContent={<Lock className="h-4 w-4 text-muted-foreground" />}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                variant="bordered"
+                radius="lg"
+                classNames={{
+                  inputWrapper: "bg-background/50 border-input hover:border-primary/50 transition-colors",
+                }}
+              />
 
               {error && (
                 <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md animate-in slide-in-from-top-2 duration-300">
@@ -128,13 +113,12 @@ export function Login() {
                 )}
               </Button>
             </form>
-          </div>
-
+          </CardBody>
           <div className="bg-muted/50 p-4 text-center text-xs text-muted-foreground border-t">
             &copy; {new Date().getFullYear()} EdgeWeave System. All rights
             reserved.
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   )

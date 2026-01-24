@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   Download,
   RefreshCw,
@@ -11,6 +11,17 @@ import {
 } from "lucide-react"
 import { useRequest } from "alova/client"
 import {
+  Card,
+  CardBody,
+  Checkbox,
+  Chip,
+  Select,
+  SelectItem,
+  Autocomplete,
+  AutocompleteItem,
+  Tooltip,
+} from "@heroui/react"
+import {
   getOutputs,
   renderOutput,
   createOutput,
@@ -21,7 +32,6 @@ import { getRuleSets } from "../lib/api/methods/rules"
 import { getNodes } from "../lib/api/methods/nodes"
 import { Button } from "../components/ui/button"
 import { SimpleModal } from "../components/ui/simple-modal"
-import { Label } from "../components/ui/label"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 
@@ -62,7 +72,7 @@ export function OutputManagement() {
     nodeIds: "[]",
     options: "{}",
   })
-  const [ruleSetSearch, setRuleSetSearch] = useState("")
+  // const [ruleSetSearch, setRuleSetSearch] = useState("") // handled by Autocomplete
   const [nodeSearch, setNodeSearch] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [showSelectedOnly, setShowSelectedOnly] = useState(false)
@@ -71,13 +81,13 @@ export function OutputManagement() {
   const ruleSetList = Array.isArray(ruleSets) ? ruleSets : ruleSets?.data || []
   const nodeList = Array.isArray(nodes) ? nodes : nodes?.data || []
 
-  const selectedNodeIds: string[] = (() => {
+  const selectedNodeIds: string[] = useMemo(() => {
     try {
       return JSON.parse(formData.nodeIds) || []
     } catch {
       return []
     }
-  })()
+  }, [formData.nodeIds])
 
   const toggleNode = (id: string) => {
     const current = selectedNodeIds
@@ -87,7 +97,7 @@ export function OutputManagement() {
     setFormData({ ...formData, nodeIds: JSON.stringify(next) })
   }
 
-  const handleSelectAll = () => {
+  const handleSelectAllNodes = () => {
     if (nodeList.length === 0) return
     const nodesToSelect = nodeList.filter(
       (node: any) =>
@@ -100,7 +110,7 @@ export function OutputManagement() {
     setFormData({ ...formData, nodeIds: JSON.stringify(Array.from(newIds)) })
   }
 
-  const handleClearSelection = () => {
+  const handleClearNodeSelection = () => {
     setFormData({ ...formData, nodeIds: "[]" })
   }
 
@@ -148,7 +158,7 @@ export function OutputManagement() {
       nodeIds: "[]",
       options: "{}",
     })
-    setRuleSetSearch("")
+    // setRuleSetSearch("")
     setNodeSearch("")
     setShowSelectedOnly(false)
   }
@@ -246,50 +256,47 @@ export function OutputManagement() {
   }
 
   return (
-    <div className="w-full space-y-6 animate-in fade-in duration-500 delay-300">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="w-full space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 reveal">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className="text-3xl font-bold tracking-tight">
             输出管理
           </h1>
           {filteredData.length > 0 && (
-            <div className="flex items-center gap-2 mt-1">
-              <input
-                type="checkbox"
-                id="select-all-outputs"
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                checked={
-                  filteredData.length > 0 &&
-                  filteredData.every((output: any) =>
-                    selectedIds.has(output.id),
-                  )
-                }
-                onChange={toggleSelectAll}
-              />
-              <label
-                htmlFor="select-all-outputs"
-                className="text-sm text-muted-foreground cursor-pointer select-none"
-              >
-                全选
-              </label>
-            </div>
+             <Checkbox
+              isSelected={
+                filteredData.length > 0 &&
+                filteredData.every((output: any) => selectedIds.has(output.id))
+              }
+              onValueChange={toggleSelectAll}
+              size="sm"
+              classNames={{
+                wrapper: "group-hover:border-primary transition-colors",
+              }}
+            >
+              全选
+            </Checkbox>
           )}
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="搜索输出配置..."
-              className="pl-9 h-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+          <Input
+            placeholder="搜索输出配置..."
+            startContent={<Search className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />}
+            className="w-full sm:w-64"
+            classNames={{
+              inputWrapper: "bg-secondary/50 dark:bg-default-500/20 border-border/50 hover:border-primary/50 transition-colors",
+            }}
+            radius="lg"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            size="sm"
+          />
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
             disabled={loading}
+            className="hover:bg-secondary/80"
           >
             <RefreshCw
               className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
@@ -302,32 +309,31 @@ export function OutputManagement() {
               size="sm"
               onClick={handleBulkDelete}
               disabled={isBulkDeleting}
-              className="bg-red-500 hover:bg-red-600 text-white"
+              className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               批量删除 ({selectedIds.size})
             </Button>
           )}
-          <Button size="sm" onClick={() => setOpen(true)}>
+          <Button size="sm" onClick={() => setOpen(true)} className="shadow-sm shadow-primary/20">
             <Plus className="h-4 w-4 mr-2" />
             新建输出
           </Button>
         </div>
       </div>
 
-      <div className="card-block p-6 grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 reveal reveal-delay-100">
         {loading && outputList.length === 0 ? (
-          Array.from({ length: 2 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-32 rounded-xl border bg-card p-6 shadow-sm animate-pulse flex flex-col justify-between"
-            >
-              <div className="h-6 w-1/3 bg-muted rounded"></div>
-              <div className="space-y-2">
-                <div className="h-4 w-full bg-muted rounded"></div>
-                <div className="h-4 w-2/3 bg-muted rounded"></div>
-              </div>
-            </div>
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="h-32 animate-pulse">
+               <CardBody className="space-y-4">
+                <div className="h-6 w-1/3 bg-muted rounded"></div>
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-muted rounded"></div>
+                  <div className="h-4 w-2/3 bg-muted rounded"></div>
+                </div>
+               </CardBody>
+            </Card>
           ))
         ) : error ? (
           <div className="col-span-full py-10 text-center text-red-500 bg-red-50/50 rounded-lg">
@@ -351,84 +357,81 @@ export function OutputManagement() {
           </div>
         ) : (
           filteredData.map((output: any, index: number) => (
-            <div
+            <Card
               key={output.id || index}
-              className={`floating-card p-6 flex flex-col justify-between hover:border-primary/50 relative cursor-pointer ${
+              isPressable
+              onPress={() => toggleSelect(output.id)}
+              className={`border-none shadow-sm hover:shadow-lg transition-all group relative overflow-hidden ${
                 selectedIds.has(output.id)
-                  ? "ring-2 ring-primary border-primary"
+                  ? "ring-2 ring-primary"
                   : ""
               }`}
-              onClick={() => toggleSelect(output.id)}
             >
-              <div className="absolute top-3 left-3 z-10">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shadow-sm"
-                  checked={selectedIds.has(output.id)}
-                  onChange={(e) => {
-                    e.stopPropagation()
-                    toggleSelect(output.id)
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="flex justify-between items-start mb-4 pl-6">
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    {output.name || "未命名输出"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {output.description || "无描述"}
-                  </p>
+              <CardBody className="p-6">
+                 <div className="absolute top-3 left-3 z-10">
+                    <Checkbox isSelected={selectedIds.has(output.id)} onValueChange={() => toggleSelect(output.id)} />
+                 </div>
+                <div className="flex justify-between items-start mb-4 pl-8">
+                  <div>
+                    <h3 className="font-semibold text-lg">
+                      {output.name || "未命名输出"}
+                    </h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {output.description || "无描述"}
+                    </p>
+                  </div>
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <Download className="h-5 w-5" />
+                  </div>
                 </div>
-                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                  <Download className="h-5 w-5" />
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                <div className="text-xs text-muted-foreground flex items-center gap-2">
-                  <Clock className="h-3 w-3" />
-                  <span>
-                    最后生成:{" "}
-                    {output.lastGenerated
-                      ? new Date(output.lastGenerated).toLocaleDateString()
-                      : "从未"}
-                  </span>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
+                  <div className="text-xs text-muted-foreground flex items-center gap-2">
+                    <Clock className="h-3 w-3" />
+                    <span>
+                      {output.lastGenerated
+                        ? new Date(output.lastGenerated).toLocaleDateString()
+                        : "从未"}
+                    </span>
+                  </div>
+                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                    <Tooltip content="编辑">
+                         <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-muted-foreground hover:text-primary"
+                          onClick={(e) => handleEdit(output, e)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                    </Tooltip>
+                     <Tooltip content="删除" color="danger">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                          onClick={(e) => handleDelete(output.id, e)}
+                          disabled={removing}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </Tooltip>
+                    <div className="w-px h-4 bg-border mx-1 self-center"></div>
+                    <Tooltip content="生成配置">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => handleGenerate(output.id, e)}
+                          disabled={generating}
+                        >
+                          <Play className="h-3 w-3 mr-2" />
+                          生成
+                        </Button>
+                    </Tooltip>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0"
-                    onClick={(e) => handleEdit(output, e)}
-                    title="编辑输出配置"
-                  >
-                    <Pencil className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0"
-                    onClick={(e) => handleDelete(output.id, e)}
-                    disabled={removing}
-                    title="删除输出配置"
-                  >
-                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                  <div className="w-px h-4 bg-border mx-1 self-center"></div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => handleGenerate(output.id, e)}
-                    disabled={generating}
-                  >
-                    <Play className="h-3 w-3 mr-2" />
-                    生成
-                  </Button>
-                </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           ))
         )}
       </div>
@@ -453,9 +456,10 @@ export function OutputManagement() {
       >
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">名称 *</Label>
             <Input
               id="name"
+              label="名称 *"
+              labelPlacement="outside"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -464,65 +468,51 @@ export function OutputManagement() {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="format">格式 *</Label>
-            <Input
-              id="format"
-              value={formData.format}
-              onChange={(e) =>
-                setFormData({ ...formData, format: e.target.value })
-              }
-              placeholder="mihomo"
-            />
+            <Select
+              label="格式 *"
+              labelPlacement="outside"
+              selectedKeys={new Set([formData.format])}
+              onSelectionChange={(keys) => {
+                const value = Array.from(keys)[0] as string | undefined
+                setFormData({ ...formData, format: value || "mihomo" })
+              }}
+            >
+              <SelectItem key="mihomo">Mihomo</SelectItem>
+              <SelectItem key="sing-box">Sing-box</SelectItem>
+              <SelectItem key="clash">Clash</SelectItem>
+            </Select>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="ruleSetId">规则集 (可选)</Label>
-            <Input
+            <Autocomplete
+              label="规则集 (可选)"
+              labelPlacement="outside"
               placeholder="搜索规则集..."
-              value={ruleSetSearch}
-              onChange={(e) => setRuleSetSearch(e.target.value)}
-              className="mb-1 h-8 text-xs"
-            />
-            <select
-              id="ruleSetId"
-              value={formData.ruleSetId}
-              onChange={(e) =>
-                setFormData({ ...formData, ruleSetId: e.target.value })
+              defaultItems={ruleSetList}
+              selectedKey={formData.ruleSetId || undefined}
+              onSelectionChange={(key) =>
+                setFormData({ ...formData, ruleSetId: (key as string) || "" })
               }
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <option value="">不绑定规则集</option>
-              {ruleSetList
-                ?.filter(
-                  (rs: any) =>
-                    (rs.name || "")
-                      .toLowerCase()
-                      .includes(ruleSetSearch.toLowerCase()) ||
-                    (rs.id || "")
-                      .toLowerCase()
-                      .includes(ruleSetSearch.toLowerCase()),
-                )
-                .map((rs: any) => (
-                  <option key={rs.id} value={rs.id}>
-                    {rs.name || rs.id}
-                  </option>
-                ))}
-            </select>
+              {(item: any) => (
+                <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>
+              )}
+            </Autocomplete>
           </div>
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
-              <Label>
-                包含节点{" "}
+              <div className="text-sm font-medium">
+                包含节点
                 <span className="text-xs font-normal text-muted-foreground ml-2">
                   ({selectedNodeIds.length} 已选)
                 </span>
-              </Label>
+              </div>
               <div className="flex items-center gap-1">
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
                   className="h-6 px-2 text-xs"
-                  onClick={handleSelectAll}
+                  onClick={handleSelectAllNodes}
                 >
                   全选
                 </Button>
@@ -531,7 +521,7 @@ export function OutputManagement() {
                   size="sm"
                   variant="ghost"
                   className="h-6 px-2 text-xs"
-                  onClick={handleClearSelection}
+                  onClick={handleClearNodeSelection}
                 >
                   清空
                 </Button>
@@ -569,12 +559,8 @@ export function OutputManagement() {
                       (node.name || "")
                         .toLowerCase()
                         .includes(nodeSearch.toLowerCase()) ||
-                      (node.type || "")
-                        .toLowerCase()
-                        .includes(nodeSearch.toLowerCase()) ||
-                      (node.id || "")
-                        .toLowerCase()
-                        .includes(nodeSearch.toLowerCase())
+                      (node.type || "").toLowerCase().includes(nodeSearch.toLowerCase()) ||
+                      (node.id || "").toLowerCase().includes(nodeSearch.toLowerCase())
 
                     if (showSelectedOnly) {
                       return match && selectedNodeIds.includes(node.id)
@@ -593,22 +579,17 @@ export function OutputManagement() {
                       key={node.id}
                       className="flex items-center space-x-2 py-1.5 px-1 hover:bg-muted/50 rounded transition-colors"
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         id={`node-${node.id}`}
-                        checked={selectedNodeIds.includes(node.id)}
-                        onChange={() => toggleNode(node.id)}
-                        className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-primary"
-                      />
-                      <label
-                        htmlFor={`node-${node.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1 flex justify-between"
+                        isSelected={selectedNodeIds.includes(node.id)}
+                        onValueChange={() => toggleNode(node.id)}
+                        size="sm"
                       >
-                        <span>{node.name || node.id}</span>
-                        <span className="text-xs text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
-                          {node.type}
-                        </span>
-                      </label>
+                         <div className="flex items-center justify-between w-full min-w-[200px]">
+                            <span className="text-sm font-medium">{node.name || node.id}</span>
+                            <Chip size="sm" variant="flat" className="ml-2 h-5 text-[10px]">{node.type}</Chip>
+                         </div>
+                      </Checkbox>
                     </div>
                   ))
                 })()
@@ -616,16 +597,17 @@ export function OutputManagement() {
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="options">高级选项 (JSON 对象)</Label>
             <Textarea
               id="options"
+              label="高级选项 (JSON 对象)"
+              labelPlacement="outside"
               value={formData.options}
               onChange={(e) =>
                 setFormData({ ...formData, options: e.target.value })
               }
               placeholder='{"udpn": true}'
               className="font-mono text-xs"
-              rows={3}
+              minRows={3}
             />
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   Workflow,
   RefreshCw,
@@ -10,6 +10,14 @@ import {
 } from "lucide-react"
 import { useRequest } from "alova/client"
 import {
+  Card,
+  CardBody,
+  Checkbox,
+  Autocomplete,
+  AutocompleteItem,
+  Tooltip,
+} from "@heroui/react"
+import {
   getRuleSets,
   createRuleSet,
   updateRuleSet,
@@ -18,7 +26,6 @@ import {
 } from "../lib/api/methods/rules"
 import { Button } from "../components/ui/button"
 import { SimpleModal } from "../components/ui/simple-modal"
-import { Label } from "../components/ui/label"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 
@@ -54,20 +61,21 @@ export function RuleManagement() {
     templateId: "",
     rawContent: "",
   })
-  const [tplSearch, setTplSearch] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
 
   const ruleSetList = Array.isArray(data) ? data : data?.data || []
   const templateList = Array.isArray(templates) ? templates : templates?.data || []
 
-  const filteredData = ruleSetList.filter(
-    (rule: any) =>
-      (rule.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (rule.description || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      (rule.id || "").toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredData = useMemo(() => {
+    return ruleSetList.filter(
+      (rule: any) =>
+        (rule.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (rule.description || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        (rule.id || "").toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+  }, [ruleSetList, searchTerm])
 
   const handleRefresh = () => {
     setSelectedIds(new Set())
@@ -138,7 +146,6 @@ export function RuleManagement() {
     setOpen(false)
     setEditingId(null)
     setFormData({ name: "", description: "", templateId: "", rawContent: "" })
-    setTplSearch("")
   }
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
@@ -178,48 +185,47 @@ export function RuleManagement() {
   }
 
   return (
-    <div className="w-full space-y-6 animate-in fade-in duration-500 delay-100">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="w-full space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 reveal">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h1 className="text-3xl font-bold tracking-tight">
             规则管理
           </h1>
           {filteredData.length > 0 && (
-            <div className="flex items-center gap-2 mt-1">
-              <input
-                type="checkbox"
-                id="select-all-rules"
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                checked={
-                  filteredData.length > 0 &&
-                  filteredData.every((rule: any) => selectedIds.has(rule.id))
-                }
-                onChange={toggleSelectAll}
-              />
-              <label
-                htmlFor="select-all-rules"
-                className="text-sm text-muted-foreground cursor-pointer select-none"
-              >
-                全选
-              </label>
-            </div>
+             <Checkbox
+              isSelected={
+                filteredData.length > 0 &&
+                filteredData.every((rule: any) => selectedIds.has(rule.id))
+              }
+              onValueChange={toggleSelectAll}
+              size="sm"
+              classNames={{
+                wrapper: "group-hover:border-primary transition-colors",
+              }}
+            >
+              全选
+            </Checkbox>
           )}
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="搜索规则集..."
-              className="pl-9 h-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+          <Input
+            placeholder="搜索规则集..."
+            startContent={<Search className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />}
+            className="w-full sm:w-64"
+            classNames={{
+              inputWrapper: "bg-secondary/50 dark:bg-default-500/20 border-border/50 hover:border-primary/50 transition-colors",
+            }}
+            radius="lg"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            size="sm"
+          />
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
             disabled={loading}
+            className="hover:bg-secondary/80"
           >
             <RefreshCw
               className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
@@ -232,30 +238,29 @@ export function RuleManagement() {
               size="sm"
               onClick={handleBulkDelete}
               disabled={isBulkDeleting}
-              className="bg-red-500 hover:bg-red-600 text-white"
+              className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               批量删除 ({selectedIds.size})
             </Button>
           )}
-          <Button size="sm" onClick={() => setOpen(true)}>
+          <Button size="sm" onClick={() => setOpen(true)} className="shadow-sm shadow-primary/20">
             <Plus className="h-4 w-4 mr-2" />
             新建规则集
           </Button>
         </div>
       </div>
 
-      <div className="card-block p-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 reveal reveal-delay-100">
           {loading && ruleSetList.length === 0 ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-40 rounded-xl border bg-card p-6 shadow-sm animate-pulse space-y-4"
-            >
-              <div className="h-12 w-12 rounded-lg bg-muted"></div>
-              <div className="h-4 w-3/4 rounded bg-muted"></div>
-              <div className="h-4 w-1/2 rounded bg-muted"></div>
-            </div>
+            <Card key={i} className="h-40 animate-pulse">
+               <CardBody className="space-y-4">
+                <div className="h-12 w-12 rounded-lg bg-muted"></div>
+                <div className="h-4 w-3/4 rounded bg-muted"></div>
+                <div className="h-4 w-1/2 rounded bg-muted"></div>
+               </CardBody>
+            </Card>
           ))
         ) : error ? (
           <div className="col-span-full py-10 text-center text-red-500 bg-red-50/50 rounded-lg border border-red-100">
@@ -279,56 +284,46 @@ export function RuleManagement() {
           </div>
         ) : (
           filteredData.map((rule: any, index: number) => (
-            <div
+            <Card
               key={rule.id || index}
-              className={`floating-card group relative overflow-hidden cursor-pointer hover:border-primary/50 ${
+              isPressable
+              onPress={() => toggleSelect(rule.id)}
+              className={`border-none shadow-sm hover:shadow-lg transition-all group relative overflow-hidden ${
                 selectedIds.has(rule.id)
-                  ? "ring-2 ring-primary border-primary"
+                  ? "ring-2 ring-primary"
                   : ""
               }`}
-              onClick={() => {
-                // Clicking card body can toggle selection or open edit? Usually cards have explicit actions.
-                // Let's make card click toggle selection for better UX if not clicking buttons
-                toggleSelect(rule.id)
-              }}
             >
-              <div className="absolute top-3 left-3 z-10">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shadow-sm"
-                  checked={selectedIds.has(rule.id)}
-                  onChange={(e) => {
-                    e.stopPropagation()
-                    toggleSelect(rule.id)
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-              <div className="p-6 space-y-4 pt-8">
-                <div className="flex items-start justify-between">
+              <CardBody className="p-6 space-y-4">
+                 <div className="absolute top-3 left-3 z-10">
+                    <Checkbox isSelected={selectedIds.has(rule.id)} onValueChange={() => toggleSelect(rule.id)} />
+                 </div>
+                <div className="flex items-start justify-between pl-8">
                   <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                     <FileJson className="h-6 w-6" />
                   </div>
-                  <div className="flex items-center gap-1 -mr-2 -mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-primary"
-                      onClick={(e) => handleEdit(rule, e)}
-                      title="编辑规则集"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                      onClick={(e) => handleDelete(rule.id, e)}
-                      disabled={removing}
-                      title="删除规则集"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div className="flex items-center gap-1 -mr-2 -mt-2">
+                     <Tooltip content="编辑">
+                         <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-muted-foreground hover:text-primary"
+                          onClick={(e) => handleEdit(rule, e)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content="删除" color="danger">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                          onClick={(e) => handleDelete(rule.id, e)}
+                          disabled={removing}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </Tooltip>
                   </div>
                 </div>
 
@@ -341,7 +336,7 @@ export function RuleManagement() {
                   </p>
                 </div>
 
-                <div className="pt-2 flex items-center gap-4 text-xs text-muted-foreground font-mono">
+                <div className="pt-2 flex items-center gap-4 text-xs text-muted-foreground font-mono border-t border-border/50">
                   <span>ID: {rule.id ? rule.id.substring(0, 6) : "N/A"}</span>
                   <span>•</span>
                   <span>
@@ -350,8 +345,8 @@ export function RuleManagement() {
                       : "刚刚"}
                   </span>
                 </div>
-              </div>
-            </div>
+              </CardBody>
+            </Card>
           ))
         )}
       </div>
@@ -374,9 +369,10 @@ export function RuleManagement() {
       >
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">名称 *</Label>
             <Input
               id="name"
+              label="名称 *"
+              labelPlacement="outside"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -385,9 +381,10 @@ export function RuleManagement() {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="desc">描述 (可选)</Label>
             <Input
               id="desc"
+              label="描述 (可选)"
+              labelPlacement="outside"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -396,50 +393,33 @@ export function RuleManagement() {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="tplId">模板 (可选)</Label>
-            <Input
+            <Autocomplete
+              label="模板 (可选)"
+              labelPlacement="outside"
               placeholder="搜索模板..."
-              value={tplSearch}
-              onChange={(e) => setTplSearch(e.target.value)}
-              className="mb-1 h-8 text-xs"
-            />
-            <select
-              id="tplId"
-              value={formData.templateId}
-              onChange={(e) =>
-                setFormData({ ...formData, templateId: e.target.value })
+              defaultItems={templateList}
+              selectedKey={formData.templateId || undefined}
+              onSelectionChange={(key) =>
+                setFormData({ ...formData, templateId: (key as string) || "" })
               }
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <option value="">不使用模板</option>
-                      {templateList
-                        ?.filter(
-                          (tpl: any) =>
-                            (tpl.name || "")
-                      .toLowerCase()
-                      .includes(tplSearch.toLowerCase()) ||
-                    (tpl.id || "")
-                      .toLowerCase()
-                      .includes(tplSearch.toLowerCase()),
-                )
-                .map((tpl: any) => (
-                  <option key={tpl.id} value={tpl.id}>
-                    {tpl.name || tpl.id}
-                  </option>
-                ))}
-            </select>
+              {(item: any) => (
+                <AutocompleteItem key={item.id}>{item.name}</AutocompleteItem>
+              )}
+            </Autocomplete>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="content">规则内容 *</Label>
             <Textarea
               id="content"
+              label="规则内容 *"
+              labelPlacement="outside"
               value={formData.rawContent}
               onChange={(e) =>
                 setFormData({ ...formData, rawContent: e.target.value })
               }
               placeholder="规则配置内容"
               className="font-mono text-xs"
-              rows={8}
+              minRows={8}
             />
           </div>
         </div>
