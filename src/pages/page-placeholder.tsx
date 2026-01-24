@@ -12,12 +12,12 @@ export function PagePlaceholder({
   icon: Icon,
 }: PagePlaceholderProps) {
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
       </div>
 
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+      <div className="card-block">
         <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
           <div className="h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center mb-6">
             <Icon className="h-10 w-10 text-muted-foreground" />

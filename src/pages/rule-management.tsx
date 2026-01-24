@@ -175,7 +175,7 @@ export function RuleManagement() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 animate-in fade-in duration-500 delay-100">
+    <div className="w-full space-y-6 animate-in fade-in duration-500 delay-100">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -278,7 +278,7 @@ export function RuleManagement() {
           filteredData.map((rule: any, index: number) => (
             <div
               key={rule.id || index}
-              className={`group relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md hover:border-primary/50 cursor-pointer ${
+              className={`floating-card group relative overflow-hidden cursor-pointer hover:border-primary/50 ${
                 selectedIds.has(rule.id)
                   ? "ring-2 ring-primary border-primary"
                   : ""

@@ -1,42 +1,37 @@
-import { useState } from "react"
 import { ThemeProvider } from "./components/theme-provider"
-import { Sidebar } from "./components/layout/sidebar"
-import { Header } from "./components/layout/header"
-import { Outlet } from "react-router-dom"
+import { MainLayout } from "./components/layout/main-layout"
+import { useEffect } from "react"
+import { useLocation } from "react-router-dom"
 
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const location = useLocation()
+
+  // Keep the subtle scroll reveal effect from original
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("in-view")
+          }
+        })
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    )
+
+    const timeoutId = setTimeout(() => {
+      document.querySelectorAll(".reveal").forEach((el) => observer.observe(el))
+    }, 100)
+
+    return () => {
+      clearTimeout(timeoutId)
+      observer.disconnect()
+    }
+  }, [location.pathname])
 
   return (
     <ThemeProvider>
-      <div className="flex min-h-screen bg-background text-foreground font-sans antialiased">
-        {/* Mobile Sidebar Overlay */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Sidebar */}
-        <aside
-          className={`
-          fixed inset-y-0 left-0 z-50 w-64 border-r bg-card transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:inset-auto
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        `}
-        >
-          <Sidebar onNavigate={() => setSidebarOpen(false)} />
-        </aside>
-
-        {/* Main Content */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-
-          <main className="flex-1 overflow-y-auto p-6">
-            <Outlet />
-          </main>
-        </div>
-      </div>
+      <MainLayout />
     </ThemeProvider>
   )
 }

@@ -9,8 +9,8 @@ import { Button } from "../components/ui/button"
 
 export function Dashboard() {
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="w-full space-y-6">
+      <div className="flex items-center justify-between reveal">
         <h1 className="text-3xl font-bold tracking-tight">仪表盘</h1>
         <div className="flex gap-2">
           <Button>添加节点</Button>
@@ -18,13 +18,14 @@ export function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 reveal reveal-delay-100">
         {[
           {
             title: "运行中节点",
             value: "12",
             icon: Server,
             color: "text-blue-500",
+            bg: "bg-blue-50 dark:bg-blue-900/20",
             trend: "+2",
           },
           {
@@ -32,13 +33,15 @@ export function Dashboard() {
             value: "24",
             icon: WorkflowIcon,
             color: "text-purple-500",
+            bg: "bg-purple-50 dark:bg-purple-900/20",
             trend: "+5",
           },
           {
             title: "系统负载",
             value: "45%",
             icon: Activity,
-            color: "text-green-500",
+            color: "text-emerald-500",
+            bg: "bg-emerald-50 dark:bg-emerald-900/20",
             trend: "-12%",
           },
           {
@@ -46,23 +49,33 @@ export function Dashboard() {
             value: "0",
             icon: ShieldCheck,
             color: "text-red-500",
+            bg: "bg-red-50 dark:bg-red-900/20",
             trend: "0",
           },
         ].map((stat, i) => (
           <div
             key={i}
-            className="rounded-xl border bg-card text-card-foreground shadow-sm p-6"
+            className="floating-card p-6 flex flex-col justify-between h-[140px] relative overflow-hidden group"
           >
-            <div className="flex items-center justify-between space-y-0 pb-2">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500">
+               <stat.icon className={`h-24 w-24 ${stat.color}`} />
+            </div>
+
+            <div className="flex items-center justify-between z-10">
               <p className="text-sm font-medium text-muted-foreground">
                 {stat.title}
               </p>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              <div className={`p-2 rounded-lg ${stat.bg}`}>
+                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              </div>
             </div>
-            <div className="flex items-center pt-4">
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="ml-auto text-xs text-muted-foreground">
-                {stat.trend.startsWith("+") ? "↑" : ""} {stat.trend} 较上周
+            <div className="z-10">
+              <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
+              <p className="text-xs text-muted-foreground mt-1 flex items-center">
+                <span className={`${stat.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'} font-medium mr-1`}>
+                   {stat.trend.startsWith("+") ? "↑" : "↓"} {stat.trend}
+                </span>
+                较上周
               </p>
             </div>
           </div>
@@ -70,75 +83,82 @@ export function Dashboard() {
       </div>
 
       {/* Content Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 reveal reveal-delay-200">
         {/* Main Chart Placeholder */}
-        <div className="col-span-4 rounded-xl border bg-card text-card-foreground shadow-sm">
-          <div className="flex flex-col space-y-1.5 p-6">
-            <h3 className="font-semibold leading-none tracking-tight">
-              流量监控
+        <div className="col-span-4 card-block p-6">
+          <div className="flex flex-col space-y-1 mb-6">
+            <h3 className="text-lg font-bold tracking-tight flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              流量趋势
             </h3>
-            <p className="text-sm text-muted-foreground">实时网络数据吞吐量</p>
+            <p className="text-sm text-muted-foreground">实时网络数据吞吐量监控</p>
           </div>
-          <div className="p-6 pt-0 h-[300px] flex items-center justify-center bg-muted/20 m-6 rounded-md border border-dashed">
-            <div className="text-muted-foreground flex flex-col items-center">
-              <Activity className="h-10 w-10 mb-2 opacity-20" />
-              <span>图表区域占位符</span>
+          <div className="h-[300px] w-full bg-gradient-to-b from-primary/5 to-transparent rounded-xl border border-primary/10 flex items-center justify-center relative overflow-hidden group">
+            {/* Fake Chart Wave */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-primary/10 blur-3xl opacity-50 group-hover:h-40 transition-all duration-700"></div>
+            <div className="text-muted-foreground/50 flex flex-col items-center z-10">
+              <div className="h-12 w-12 rounded-full bg-background shadow-sm flex items-center justify-center mb-3 text-primary animate-pulse">
+                <Activity className="h-6 w-6" />
+              </div>
+              <span className="font-medium text-sm">图表可视化区域</span>
             </div>
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="col-span-3 rounded-xl border bg-card text-card-foreground shadow-sm">
-          <div className="flex flex-col space-y-1.5 p-6">
-            <h3 className="font-semibold leading-none tracking-tight">
-              最近活动
-            </h3>
-            <p className="text-sm text-muted-foreground">系统操作日志</p>
+        <div className="col-span-3 card-block p-0 overflow-hidden flex flex-col">
+          <div className="p-6 border-b border-border/40 bg-muted/20">
+            <h3 className="font-bold tracking-tight">最近活动</h3>
+            <p className="text-sm text-muted-foreground">系统操作日志审计</p>
           </div>
-          <div className="p-6 pt-0">
-            <div className="space-y-6">
+          <div className="p-0 flex-1 overflow-y-auto">
+            <div className="divide-y divide-border/40">
               {[
-                { time: "10:24", user: "Admin", action: "更新了节点配置 #001" },
-                { time: "09:12", user: "System", action: "自动备份完成" },
-                { time: "Yesterday", user: "Admin", action: "新增规则引擎 v2" },
-                { time: "Yesterday", user: "User1", action: "登录系统" },
+                { time: "10:24", user: "Admin", action: "更新了节点配置 #001", type: "update" },
+                { time: "09:12", user: "System", action: "自动备份完成", type: "success" },
+                { time: "昨天", user: "Admin", action: "新增规则引擎 v2", type: "create" },
+                { time: "昨天", user: "User1", action: "登录系统", type: "login" },
+                { time: "2天前", user: "System", action: "检测到高负载告警", type: "warning" },
               ].map((log, i) => (
-                <div key={i} className="flex items-center">
-                  <span className="relative flex h-2 w-2 mr-4">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                  </span>
-                  <div className="ml-2 space-y-1">
-                    <p className="text-sm font-medium leading-none">
+                <div key={i} className="flex items-center p-4 hover:bg-muted/30 transition-colors">
+                  <div className={`h-2 w-2 rounded-full mr-4 flex-shrink-0 ${
+                    log.type === 'warning' ? 'bg-orange-500' :
+                    log.type === 'success' ? 'bg-emerald-500' :
+                    log.type === 'create' ? 'bg-blue-500' : 'bg-slate-300'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium leading-none truncate mb-1">
                       {log.action}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {log.user} - {log.time}
-                    </p>
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <span className="font-semibold text-foreground/70 mr-2">{log.user}</span>
+                      <span>{log.time}</span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+          <div className="p-3 border-t border-border/40 bg-muted/20 text-center">
+            <Button variant="link" size="sm" className="text-xs text-muted-foreground h-auto p-0">查看全部日志</Button>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3 reveal reveal-delay-300">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer group"
+            className="card-block p-4 flex items-center gap-4 cursor-pointer hover:border-primary/40 hover:shadow-md transition-all group"
           >
-            <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                <Zap className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold">快捷操作 {i}</h3>
-                <p className="text-sm text-muted-foreground">
-                  快速执行常用任务
-                </p>
-              </div>
+            <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+              <Zap className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">快捷操作 {i}</h3>
+              <p className="text-xs text-muted-foreground">
+                一键执行预设任务
+              </p>
             </div>
           </div>
         ))}

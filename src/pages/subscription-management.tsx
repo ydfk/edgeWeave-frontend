@@ -186,7 +186,7 @@ export function SubscriptionManagement() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 animate-in fade-in duration-500 delay-200">
+    <div className="w-full space-y-6 animate-in fade-in duration-500 delay-200">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -253,7 +253,7 @@ export function SubscriptionManagement() {
         </div>
       </div>
 
-      <div className="rounded-xl border bg-card shadow-sm divide-y divide-border">
+      <div className="card-block divide-y divide-border/40 overflow-hidden">
         {loading && data.length === 0 ? (
           <div className="p-8 text-center space-y-4">
             <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>

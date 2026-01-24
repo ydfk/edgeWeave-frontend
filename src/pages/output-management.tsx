@@ -242,7 +242,7 @@ export function OutputManagement() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 animate-in fade-in duration-500 delay-300">
+    <div className="w-full space-y-6 animate-in fade-in duration-500 delay-300">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -349,7 +349,7 @@ export function OutputManagement() {
           filteredData.map((output: any, index: number) => (
             <div
               key={output.id || index}
-              className={`rounded-xl border bg-card text-card-foreground shadow-sm p-6 flex flex-col justify-between hover:border-primary/50 transition-colors relative cursor-pointer ${
+              className={`floating-card p-6 flex flex-col justify-between hover:border-primary/50 relative cursor-pointer ${
                 selectedIds.has(output.id)
                   ? "ring-2 ring-primary border-primary"
                   : ""

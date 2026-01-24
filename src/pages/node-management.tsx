@@ -167,7 +167,7 @@ export function NodeManagement() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 animate-in fade-in duration-500">
+    <div className="w-full space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
           节点管理
@@ -212,7 +212,7 @@ export function NodeManagement() {
         </div>
       </div>
 
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+      <div className="card-block">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
