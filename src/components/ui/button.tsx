@@ -46,6 +46,7 @@ export function Button({
   variant = "default",
   size = "default",
   className,
+  disabled,
   ...props
 }: ButtonProps) {
   const mapped = variantMap[variant]
@@ -57,7 +58,14 @@ export function Button({
       variant={mapped.variant}
       size={sizeMap[size]}
       isIconOnly={isIconOnly}
-      className={cn(className)}
+      disabled={disabled}
+      className={cn(
+        "transition-all duration-[var(--duration-fast)]",
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        !disabled && "hover:scale-[1.02]",
+        size === "icon" && "h-10 w-10 min-h-[var(--min-touch-target)] min-w-[var(--min-touch-target)]",
+        className
+      )}
       {...props}
     />
   )
