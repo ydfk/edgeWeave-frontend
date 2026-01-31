@@ -30,6 +30,7 @@ import { useToast } from "../components/ui/toast-provider"
 import { useConfirm } from "../components/ui/confirm-dialog"
 import { ProtocolFilter } from "../components/node/protocol-filter"
 import { TagCloud } from "../components/node/tag-cloud"
+import { ImportPanel } from "../components/node/import-panel"
 
 export function NodeManagement() {
   const { toast } = useToast()
@@ -320,6 +321,23 @@ export function NodeManagement() {
             </Button>
           </>
         }
+      />
+
+      {/* 导入面板 */}
+      <ImportPanel
+        onImportSuccess={() => {
+          toast({
+            variant: "success",
+            message: "节点导入成功",
+          })
+          refresh()
+        }}
+        onImportError={(error) => {
+          toast({
+            variant: "error",
+            message: `导入失败: ${error}`,
+          })
+        }}
       />
 
       {/* 筛选区域 */}

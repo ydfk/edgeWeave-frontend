@@ -25,3 +25,6 @@ export const uploadNodes = (formData: FormData) =>
       "Content-Type": "multipart/form-data",
     },
   })
+
+// 获取所有标签
+export const getNodeTags = () => alovaInstance.Get("/nodes/tags")
