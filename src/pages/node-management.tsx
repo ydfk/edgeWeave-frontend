@@ -7,12 +7,15 @@ import {
   SelectItem,
   Autocomplete,
   AutocompleteItem,
+  Tabs,
+  Tab,
 } from "@heroui/react"
 import {
   getNodes,
   createNode,
   updateNode,
   deleteNode,
+  getNodeTags,
 } from "../lib/api/methods/nodes"
 import { getSubscriptionSources } from "../lib/api/methods/subscriptions"
 import { Button } from "../components/ui/button"
@@ -25,6 +28,8 @@ import { EmptyState } from "../components/ui/empty-state"
 import { Skeleton } from "../components/ui/skeleton"
 import { useToast } from "../components/ui/toast-provider"
 import { useConfirm } from "../components/ui/confirm-dialog"
+import { ProtocolFilter } from "../components/node/protocol-filter"
+import { TagCloud } from "../components/node/tag-cloud"
 
 export function NodeManagement() {
   const { toast } = useToast()
@@ -41,6 +46,11 @@ export function NodeManagement() {
   const { data: subSources } = useRequest(getSubscriptionSources, {
     initialData: [],
   })
+
+  const { data: tagsData } = useRequest(getNodeTags, {
+    initialData: [],
+  })
+  const tagsList = Array.isArray(tagsData) ? tagsData : tagsData?.data || []
 
   const { send: create, loading: creating } = useRequest(createNode, {
     immediate: false,
@@ -64,21 +74,51 @@ export function NodeManagement() {
   })
   const subSourceList = Array.isArray(subSources) ? subSources : subSources?.data || []
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedProtocol, setSelectedProtocol] = useState<string | null>(null)
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState<string>("all")
 
   const nodeList = Array.isArray(data) ? data : data?.data || []
 
   const filteredData = useMemo(() => {
-    return nodeList.filter(
-      (node: any) =>
+    return nodeList.filter((node: any) => {
+      const matchesSearch =
         (node.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (node.type || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (node.id || "").toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-  }, [nodeList, searchTerm])
+        (node.id || "").toLowerCase().includes(searchTerm.toLowerCase())
+
+      const matchesProtocol = selectedProtocol === null || node.type === selectedProtocol
+
+      const matchesTags =
+        selectedTags.length === 0 ||
+        selectedTags.every((selectedTag) => {
+          try {
+            const nodeTags = node.tags ? JSON.parse(node.tags) : []
+            return nodeTags.includes(selectedTag)
+          } catch {
+            return false
+          }
+        })
+
+      const matchesTab =
+        activeTab === "all" ||
+        (activeTab === "manual" && !node.subscriptionSourceId) ||
+        node.subscriptionSourceId === activeTab
+
+      return matchesSearch && matchesProtocol && matchesTags && matchesTab
+    })
+  }, [nodeList, searchTerm, selectedProtocol, selectedTags, activeTab])
 
   const handleRefresh = () => {
     setSelectedKeys(new Set([]))
+    setSelectedProtocol(null)
+    setSelectedTags([])
+    setActiveTab("all")
     refresh()
+  }
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
   }
 
   const handleBulkDelete = async () => {
@@ -281,6 +321,36 @@ export function NodeManagement() {
           </>
         }
       />
+
+      {/* 筛选区域 */}
+      <div className="p-4 rounded-lg border bg-gray-50 dark:bg-gray-800/50">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ProtocolFilter selectedProtocol={selectedProtocol} onProtocolChange={setSelectedProtocol} />
+          <div>
+            <span className="text-sm font-medium mb-2 block">标签筛选</span>
+            <TagCloud tags={tagsList} selectedTags={selectedTags} onTagToggle={handleTagToggle} />
+          </div>
+        </div>
+      </div>
+
+      {/* 订阅源分组 Tabs */}
+      <Tabs
+        selectedKey={activeTab}
+        onSelectionChange={(key) => setActiveTab(key as string)}
+        variant="underlined"
+        classNames={{
+          tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider",
+          cursor: "w-full bg-primary",
+          tab: "max-w-fit px-0 h-12",
+          tabContent: "group-data-[selected=true]:text-primary"
+        }}
+      >
+        <Tab key="all" title="全部" />
+        {subSourceList.map((source: any) => (
+          <Tab key={source.id} title={source.name} />
+        ))}
+        <Tab key="manual" title="手动" />
+      </Tabs>
 
       {error ? (
         <div className="py-10 text-center text-red-500 bg-red-50/50 rounded-lg border border-red-100">
