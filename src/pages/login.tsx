@@ -2,10 +2,11 @@ import { useState } from "react"
 import { useRequest } from "alova/client"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Card, CardBody } from "@heroui/react"
+import { motion } from "framer-motion"
 import { login } from "../lib/api/methods/user"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
-import { Lock, User, AlertCircle, Workflow, ArrowRight } from "lucide-react"
+import { Lock, User, AlertCircle, Workflow } from "lucide-react"
 
 export function Login() {
   const [username, setUsername] = useState("")
@@ -37,11 +38,16 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden"
+    >
       {/* Abstract Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px]" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/5 blur-[100px]" />
+        <div className="absolute top-[-20%] right-[-10%] w-[60vw] max-w-[600px] h-[60vw] max-h-[600px] rounded-full bg-primary/5 blur-[120px]" />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[50vw] max-w-[500px] h-[50vw] max-h-[500px] rounded-full bg-primary/5 blur-[100px]" />
       </div>
 
       <div className="w-full max-w-md p-8 z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -86,7 +92,10 @@ export function Login() {
               />
 
               {error && (
-                <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md animate-in slide-in-from-top-2 duration-300">
+                <div
+                  className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md animate-in slide-in-from-top-2 duration-300"
+                  aria-live="assertive"
+                >
                   <AlertCircle className="h-4 w-4" />
                   <span>{error.message || "登录失败，请检查用户名或密码"}</span>
                 </div>
@@ -94,23 +103,10 @@ export function Login() {
 
               <Button
                 type="submit"
-                className="w-full group relative overflow-hidden"
+                className="w-full hover:scale-[1.02] transition-transform"
                 disabled={loading}
               >
-                <span
-                  className={`flex items-center justify-center gap-2 transition-transform duration-300 ${
-                    loading
-                      ? "translate-y-0"
-                      : "group-hover:-translate-y-[150%]"
-                  }`}
-                >
-                  {loading ? "登录中..." : "立即登录"}
-                </span>
-                {!loading && (
-                  <span className="absolute inset-0 flex items-center justify-center gap-2 translate-y-[150%] transition-transform duration-300 group-hover:translate-y-0">
-                    进入系统 <ArrowRight className="h-4 w-4" />
-                  </span>
-                )}
+                {loading ? "登录中..." : "立即登录"}
               </Button>
             </form>
           </CardBody>
@@ -120,6 +116,6 @@ export function Login() {
           </div>
         </Card>
       </div>
-    </div>
+    </motion.div>
   )
 }
