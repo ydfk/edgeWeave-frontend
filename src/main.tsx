@@ -14,7 +14,6 @@ import Unauthorized from "./components/error/unauthorized"
 import { Dashboard } from "./pages/dashboard"
 import { NodeManagement } from "./pages/node-management"
 import { RuleManagement } from "./pages/rule-management"
-import { SubscriptionManagement } from "./pages/subscription-management"
 import { OutputManagement } from "./pages/output-management"
 import { UserManagement } from "./pages/user-management"
 import { Settings } from "./pages/settings"
@@ -44,10 +43,6 @@ const router = createBrowserRouter([
       {
         path: "rules",
         element: <RuleManagement />,
-      },
-      {
-        path: "subscriptions",
-        element: <SubscriptionManagement />,
       },
       {
         path: "outputs",
