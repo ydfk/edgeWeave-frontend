@@ -1,5 +1,21 @@
 import { alovaInstance } from ".."
 
+// 解析后的节点数据结构
+export interface ParsedNode {
+  name: string
+  type: string
+  address: string
+  port: number
+  raw: string
+  extra?: Record<string, unknown>
+}
+
+// 解析结果（包含成功和失败）
+export interface ParseResult {
+  data: ParsedNode[]
+  failed: Array<{ line: number; error: string; raw: string }>
+}
+
 // 节点列表
 export const getNodes = alovaInstance.Get("/nodes")
 
@@ -28,3 +44,7 @@ export const uploadNodes = (formData: FormData) =>
 
 // 获取所有标签
 export const getNodeTags = () => alovaInstance.Get("/nodes/tags")
+
+// 解析节点内容（预览）
+export const parseNodes = (content: string, format?: "auto" | "uri" | "yaml") =>
+  alovaInstance.Post("/nodes/parse", { content, format: format || "auto" })
