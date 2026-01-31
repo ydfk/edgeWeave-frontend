@@ -1,22 +1,12 @@
 import { useState, useMemo } from "react"
-import { RefreshCw, Plus, Pencil, Trash2, Search } from "lucide-react"
+import { RefreshCw, Plus, Pencil, Trash2, Server, Globe } from "lucide-react"
 import { useRequest } from "alova/client"
 import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
   Chip,
-  Tooltip,
-  Card,
-  CardBody,
   Select,
   SelectItem,
   Autocomplete,
   AutocompleteItem,
-  Selection
 } from "@heroui/react"
 import {
   getNodes,
@@ -29,6 +19,10 @@ import { Button } from "../components/ui/button"
 import { SimpleModal } from "../components/ui/simple-modal"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
+import { PageHeader } from "../components/ui/page-header"
+import { GridCard } from "../components/ui/grid-card"
+import { EmptyState } from "../components/ui/empty-state"
+import { Skeleton } from "../components/ui/skeleton"
 
 export function NodeManagement() {
   const {
@@ -55,8 +49,8 @@ export function NodeManagement() {
   })
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  // Use HeroUI Selection type
-  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]))
+  // Use Set<string> for selection state
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]))
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -64,7 +58,6 @@ export function NodeManagement() {
     rawContent: "",
     subscriptionSourceId: "",
   })
-  // const [subSearch, setSubSearch] = useState("") // Not needed with Autocomplete/Select searchable?
   const subSourceList = Array.isArray(subSources) ? subSources : subSources?.data || []
   const [searchTerm, setSearchTerm] = useState("")
 
@@ -85,14 +78,16 @@ export function NodeManagement() {
   }
 
   const handleBulkDelete = async () => {
-    if (selectedKeys === "all") return // Handle all selection if needed, simplified for now
-    if (selectedKeys.size === 0) return
-    if (!confirm(`确定要删除选中的 ${selectedKeys.size} 个节点吗？`)) return
+    // Use Set directly, no "all" special case needed
+    const keysToDelete = selectedKeys
+
+    if (keysToDelete.size === 0) return
+    if (!confirm(`确定要删除选中的 ${keysToDelete.size} 个节点吗？`)) return
 
     setIsBulkDeleting(true)
     try {
       const results = await Promise.allSettled(
-        Array.from(selectedKeys).map((id) => deleteNode(id as string).send()),
+        Array.from(keysToDelete).map((id) => deleteNode(id as string).send()),
       )
       const success = results.filter(
         (item) => item.status === "fulfilled",
@@ -163,145 +158,167 @@ export function NodeManagement() {
     }
   }
 
-  const renderCell = (node: any, columnKey: React.Key) => {
-    switch (columnKey) {
-      case "id":
-        return <span className="font-mono text-xs text-muted-foreground">{node.id.substring(0, 8)}...</span>
-      case "name":
-        return (
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
-            <span className="font-medium">{node.name || "未命名节点"}</span>
-          </div>
-        )
-      case "type":
-         return <Chip size="sm" variant="flat">{node.type}</Chip>
-      case "status":
-        return (
-          <Chip
-            size="sm"
-            color={node.status === "online" ? "success" : "default"}
-            variant="flat"
-          >
-            {node.status || "未知"}
-          </Chip>
-        )
-      case "actions":
-        return (
-          <div className="relative flex items-center gap-2 justify-end">
-             <Tooltip content="编辑节点">
-              <span className="text-lg text-default-400 cursor-pointer active:opacity-50" onClick={() => handleEdit(node)}>
-                <Pencil className="h-4 w-4" />
-              </span>
-            </Tooltip>
-            <Tooltip color="danger" content="删除节点">
-              <span className="text-lg text-danger cursor-pointer active:opacity-50" onClick={() => handleDelete(node.id)}>
-                <Trash2 className="h-4 w-4" />
-              </span>
-            </Tooltip>
-          </div>
-        )
-      default:
-        return node[columnKey as keyof typeof node]
+  // Selection helpers
+  const isSelected = (id: string) => {
+    return selectedKeys.has(id)
+  }
+
+  const toggleSelection = (id: string) => {
+    setSelectedKeys((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedKeys(new Set(filteredData.map((n: any) => n.id)))
+    } else {
+      setSelectedKeys(new Set([]))
     }
   }
 
+  const allSelected = useMemo(() => {
+    if (filteredData.length === 0) return false
+    return filteredData.every((n: any) => selectedKeys.has(n.id))
+  }, [selectedKeys, filteredData])
+
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 reveal">
-        <h1 className="text-3xl font-bold tracking-tight">
-          节点管理
-        </h1>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Input
-            placeholder="搜索节点..."
-            startContent={<Search className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />}
-            className="w-full sm:w-64"
-            classNames={{
-              inputWrapper: "bg-secondary/50 dark:bg-default-500/20 border-border/50 hover:border-primary/50 transition-colors",
-            }}
-            radius="lg"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            size="sm"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="hover:bg-secondary/80"
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
-            />
-            刷新
-          </Button>
-          {(selectedKeys === "all" || selectedKeys.size > 0) && (
+      <PageHeader
+        title="节点管理"
+        description="管理您的代理节点配置"
+        search={{
+          value: searchTerm,
+          onChange: setSearchTerm,
+          placeholder: "搜索节点..."
+        }}
+        selectAll={
+          filteredData.length > 0
+            ? {
+                checked: allSelected,
+                onChange: handleSelectAll,
+                label: `全选 (${filteredData.length})`
+              }
+            : undefined
+        }
+        actions={
+          <>
             <Button
-              variant="destructive"
+              variant="outline"
               size="sm"
-              onClick={handleBulkDelete}
-              disabled={isBulkDeleting}
-              className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
+              onClick={handleRefresh}
+              disabled={loading}
+              className="hover:bg-secondary/80"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              批量删除 ({selectedKeys === "all" ? filteredData.length : selectedKeys.size})
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
+              刷新
             </Button>
-          )}
-          <Button size="sm" onClick={() => setOpen(true)} className="shadow-sm shadow-primary/20">
-            <Plus className="h-4 w-4 mr-2" />
-            新建节点
+            {(selectedKeys.size > 0) && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                批量删除 ({selectedKeys.size})
+              </Button>
+            )}
+            <Button size="sm" onClick={() => setOpen(true)} className="shadow-sm shadow-primary/20">
+              <Plus className="h-4 w-4 mr-2" />
+              新建节点
+            </Button>
+          </>
+        }
+      />
+
+      {error ? (
+        <div className="py-10 text-center text-red-500 bg-red-50/50 rounded-lg border border-red-100">
+          <p>加载失败: {error.message}</p>
+          <Button variant="link" onClick={() => refresh()}>
+            重试
           </Button>
         </div>
-      </div>
-
-      <Card className="shadow-sm border-none reveal reveal-delay-100">
-        <CardBody className="p-0">
-          {error ? (
-             <div className="py-10 text-center text-red-500 bg-red-50/50 rounded-lg">
-              <p>加载失败: {error.message}</p>
-              <Button variant="link" onClick={() => refresh()}>
-                重试
+      ) : loading ? (
+        <Skeleton variant="grid" count={6} />
+      ) : filteredData.length === 0 ? (
+        <EmptyState
+          icon={Globe}
+          title="暂无节点"
+          description={searchTerm ? "未找到匹配的节点" : "开始添加您的第一个代理节点"}
+          action={
+            !searchTerm && (
+              <Button onClick={() => setOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                新建节点
               </Button>
-            </div>
-          ) : (
-          <Table
-            aria-label="Nodes table"
-            selectionMode="multiple"
-            selectedKeys={selectedKeys}
-            onSelectionChange={setSelectedKeys}
-            removeWrapper
-            classNames={{
-                wrapper: "min-h-[222px]",
-                th: "bg-muted/50 text-muted-foreground font-medium",
-                td: "py-3 border-b border-border/50",
-            }}
-          >
-            <TableHeader>
-              <TableColumn key="id">ID</TableColumn>
-              <TableColumn key="name">名称</TableColumn>
-              <TableColumn key="type">类型</TableColumn>
-              <TableColumn key="status">状态</TableColumn>
-              <TableColumn key="actions" align="end">操作</TableColumn>
-            </TableHeader>
-            <TableBody
-              items={filteredData}
-              emptyContent={
-                loading ? "加载中..." : "暂无节点"
+            )
+          }
+        />
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 reveal reveal-delay-100">
+          {filteredData.map((node: any) => (
+            <GridCard
+              key={node.id}
+              icon={Server}
+              title={node.name || "未命名节点"}
+              description={node.type}
+              isSelected={isSelected(node.id)}
+              onSelect={() => toggleSelection(node.id)}
+              isPressable
+              onPress={() => handleEdit(node)}
+              footer={
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono opacity-50">{node.id.substring(0, 8)}...</span>
+                  <Chip
+                    size="sm"
+                    color={node.status === "online" ? "success" : "default"}
+                    variant="flat"
+                    className="h-5 text-[10px]"
+                  >
+                    {node.status || "未知"}
+                  </Chip>
+                </div>
               }
-              isLoading={loading}
-            >
-              {(item: any) => (
-                <TableRow key={item.id}>
-                  {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          )}
-        </CardBody>
-      </Card>
+              actions={
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-default-400 hover:text-primary"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit(node)
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-default-400 hover:text-danger"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(node.id)
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              }
+            />
+          ))}
+        </div>
+      )}
 
       <SimpleModal
         isOpen={open}
@@ -401,3 +418,4 @@ export function NodeManagement() {
     </div>
   )
 }
+

@@ -6,17 +6,9 @@ import {
   FileJson,
   Pencil,
   Trash2,
-  Search,
 } from "lucide-react"
 import { useRequest } from "alova/client"
-import {
-  Card,
-  CardBody,
-  Checkbox,
-  Autocomplete,
-  AutocompleteItem,
-  Tooltip,
-} from "@heroui/react"
+import { Autocomplete, AutocompleteItem, Tooltip } from "@heroui/react"
 import {
   getRuleSets,
   createRuleSet,
@@ -28,6 +20,10 @@ import { Button } from "../components/ui/button"
 import { SimpleModal } from "../components/ui/simple-modal"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
+import { PageHeader } from "../components/ui/page-header"
+import { EmptyState } from "../components/ui/empty-state"
+import { Skeleton } from "../components/ui/skeleton"
+import { GridCard } from "../components/ui/grid-card"
 
 export function RuleManagement() {
   const {
@@ -184,84 +180,69 @@ export function RuleManagement() {
     }
   }
 
+  const renderActions = () => (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleRefresh}
+        disabled={loading}
+        className="hover:bg-secondary/80"
+      >
+        <RefreshCw
+          className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+        />
+        刷新
+      </Button>
+      {selectedIds.size > 0 && (
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleBulkDelete}
+          disabled={isBulkDeleting}
+          className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          批量删除 ({selectedIds.size})
+        </Button>
+      )}
+      <Button
+        size="sm"
+        onClick={() => setOpen(true)}
+        className="shadow-sm shadow-primary/20"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        新建规则集
+      </Button>
+    </>
+  )
+
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 reveal">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">
-            规则管理
-          </h1>
-          {filteredData.length > 0 && (
-             <Checkbox
-              isSelected={
-                filteredData.length > 0 &&
-                filteredData.every((rule: any) => selectedIds.has(rule.id))
+      <PageHeader
+        title="规则管理"
+        search={{
+          value: searchTerm,
+          onChange: setSearchTerm,
+          placeholder: "搜索规则集...",
+        }}
+        selectAll={
+          filteredData.length > 0
+            ? {
+                checked:
+                  filteredData.length > 0 &&
+                  filteredData.every((rule: any) => selectedIds.has(rule.id)),
+                onChange: toggleSelectAll,
+                label: "全选",
               }
-              onValueChange={toggleSelectAll}
-              size="sm"
-              classNames={{
-                wrapper: "group-hover:border-primary transition-colors",
-              }}
-            >
-              全选
-            </Checkbox>
-          )}
-        </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Input
-            placeholder="搜索规则集..."
-            startContent={<Search className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />}
-            className="w-full sm:w-64"
-            classNames={{
-              inputWrapper: "bg-secondary/50 dark:bg-default-500/20 border-border/50 hover:border-primary/50 transition-colors",
-            }}
-            radius="lg"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            size="sm"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="hover:bg-secondary/80"
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
-            />
-            刷新
-          </Button>
-          {selectedIds.size > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleBulkDelete}
-              disabled={isBulkDeleting}
-              className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              批量删除 ({selectedIds.size})
-            </Button>
-          )}
-          <Button size="sm" onClick={() => setOpen(true)} className="shadow-sm shadow-primary/20">
-            <Plus className="h-4 w-4 mr-2" />
-            新建规则集
-          </Button>
-        </div>
-      </div>
+            : undefined
+        }
+        actions={renderActions()}
+      />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 reveal reveal-delay-100">
-          {loading && ruleSetList.length === 0 ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="h-40 animate-pulse">
-               <CardBody className="space-y-4">
-                <div className="h-12 w-12 rounded-lg bg-muted"></div>
-                <div className="h-4 w-3/4 rounded bg-muted"></div>
-                <div className="h-4 w-1/2 rounded bg-muted"></div>
-               </CardBody>
-            </Card>
-          ))
+        {loading && ruleSetList.length === 0 ? (
+          <Skeleton variant="grid" count={3} />
         ) : error ? (
           <div className="col-span-full py-10 text-center text-red-500 bg-red-50/50 rounded-lg border border-red-100">
             <p>加载规则集失败: {error.message}</p>
@@ -269,74 +250,39 @@ export function RuleManagement() {
               重试
             </Button>
           </div>
-          ) : ruleSetList.length === 0 ? (
-          <div className="col-span-full py-20 text-center text-muted-foreground border border-dashed rounded-xl">
-            <Workflow className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p>暂无规则集，开始配置您的第一个规则</p>
+        ) : ruleSetList.length === 0 ? (
+          <div className="col-span-full">
+            <EmptyState
+              icon={Workflow}
+              title="暂无规则集"
+              description="开始配置您的第一个规则"
+            />
           </div>
         ) : filteredData.length === 0 ? (
-          <div className="col-span-full py-20 text-center text-muted-foreground border border-dashed rounded-xl">
-            <Search className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p>未找到匹配的规则集</p>
-            <Button variant="link" onClick={() => setSearchTerm("")}>
-              清除搜索
-            </Button>
+          <div className="col-span-full">
+            <EmptyState
+              icon={Workflow}
+              title="未找到匹配的规则集"
+              action={
+                <Button variant="link" onClick={() => setSearchTerm("")}>
+                  清除搜索
+                </Button>
+              }
+            />
           </div>
         ) : (
           filteredData.map((rule: any, index: number) => (
-            <Card
+            <GridCard
               key={rule.id || index}
+              icon={FileJson}
+              title={rule.name || "未命名规则集"}
+              description={rule.description || "无描述信息"}
+              isSelected={selectedIds.has(rule.id)}
+              onSelect={() => toggleSelect(rule.id)}
               isPressable
               onPress={() => toggleSelect(rule.id)}
-              className={`border-none shadow-sm hover:shadow-lg transition-all group relative overflow-hidden ${
-                selectedIds.has(rule.id)
-                  ? "ring-2 ring-primary"
-                  : ""
-              }`}
-            >
-              <CardBody className="p-6 space-y-4">
-                 <div className="absolute top-3 left-3 z-10">
-                    <Checkbox isSelected={selectedIds.has(rule.id)} onValueChange={() => toggleSelect(rule.id)} />
-                 </div>
-                <div className="flex items-start justify-between pl-8">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <FileJson className="h-6 w-6" />
-                  </div>
-                  <div className="flex items-center gap-1 -mr-2 -mt-2">
-                     <Tooltip content="编辑">
-                         <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-muted-foreground hover:text-primary"
-                          onClick={(e) => handleEdit(rule, e)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                    </Tooltip>
-                    <Tooltip content="删除" color="danger">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                          onClick={(e) => handleDelete(rule.id, e)}
-                          disabled={removing}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </Tooltip>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-lg tracking-tight">
-                    {rule.name || "未命名规则集"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                    {rule.description || "无描述信息"}
-                  </p>
-                </div>
-
-                <div className="pt-2 flex items-center gap-4 text-xs text-muted-foreground font-mono border-t border-border/50">
+              footer={
+                <>
                   <span>ID: {rule.id ? rule.id.substring(0, 6) : "N/A"}</span>
                   <span>•</span>
                   <span>
@@ -344,9 +290,34 @@ export function RuleManagement() {
                       ? new Date(rule.updatedAt).toLocaleDateString()
                       : "刚刚"}
                   </span>
-                </div>
-              </CardBody>
-            </Card>
+                </>
+              }
+              actions={
+                <>
+                  <Tooltip content="编辑">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={(e) => handleEdit(rule, e)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content="删除" color="danger">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                      onClick={(e) => handleDelete(rule.id, e)}
+                      disabled={removing}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </Tooltip>
+                </>
+              }
+            />
           ))
         )}
       </div>
@@ -355,7 +326,9 @@ export function RuleManagement() {
         isOpen={open}
         onClose={handleClose}
         title={editingId ? "编辑规则集" : "新建规则集"}
-        description={editingId ? "修改现有的规则配置" : "创建一个新的规则集合"}
+        description={
+          editingId ? "修改现有的规则配置" : "创建一个新的规则集合"
+        }
         footer={
           <>
             <Button variant="outline" onClick={handleClose}>

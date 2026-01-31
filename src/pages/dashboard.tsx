@@ -7,16 +7,16 @@ import {
 } from "lucide-react"
 import { Card, CardBody, CardHeader } from "@heroui/react"
 import { Button } from "../components/ui/button"
+import { PageHeader } from "../components/ui/page-header"
 
 export function Dashboard() {
   return (
     <div className="w-full space-y-6">
-      <div className="flex items-center justify-between reveal">
-        <h1 className="text-3xl font-bold tracking-tight">仪表盘</h1>
-        <div className="flex gap-2">
-          <Button>添加节点</Button>
-        </div>
-      </div>
+      <PageHeader
+        title="仪表盘"
+        actions={<Button>添加节点</Button>}
+        className="reveal"
+      />
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 reveal reveal-delay-100">
@@ -56,7 +56,7 @@ export function Dashboard() {
         ].map((stat, i) => (
           <Card
             key={i}
-            className="h-[140px] relative overflow-hidden group border-none shadow-md hover:shadow-lg transition-all"
+            className="h-[140px] relative overflow-hidden group floating-card"
           >
             <CardBody className="p-6 flex flex-col justify-between overflow-visible">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500 pointer-events-none">
@@ -88,7 +88,7 @@ export function Dashboard() {
       {/* Content Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 reveal reveal-delay-200">
         {/* Main Chart Placeholder */}
-        <Card className="col-span-4 p-6 shadow-sm border-none">
+        <Card className="col-span-4 p-6 floating-card">
           <CardHeader className="p-0 pb-6 flex-col items-start gap-1">
             <h3 className="text-lg font-bold tracking-tight flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
@@ -109,7 +109,7 @@ export function Dashboard() {
         </Card>
 
         {/* Recent Activity */}
-        <Card className="col-span-3 overflow-hidden flex flex-col shadow-sm border-none">
+        <Card className="col-span-3 overflow-hidden flex flex-col floating-card">
           <CardHeader className="p-6 border-b border-border/40 bg-muted/20">
             <div className="flex flex-col gap-1">
               <h3 className="font-bold tracking-tight">最近活动</h3>
@@ -155,7 +155,7 @@ export function Dashboard() {
           <Card
             key={i}
             isPressable
-            className="p-4 flex flex-row items-center gap-4 hover:border-primary/40 hover:shadow-md transition-all group shadow-sm"
+            className="p-4 flex flex-row items-center gap-4 floating-card group"
           >
              <CardBody className="flex flex-row items-center gap-4 p-0 overflow-visible">
               <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">

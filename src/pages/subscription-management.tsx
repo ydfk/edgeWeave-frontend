@@ -7,16 +7,9 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Search,
 } from "lucide-react"
 import { useRequest } from "alova/client"
-import {
-  Card,
-  CardBody,
-  Checkbox,
-  Tooltip,
-  Chip
-} from "@heroui/react"
+import { Tooltip } from "@heroui/react"
 import {
   getSubscriptionSources,
   syncSubscriptionSource,
@@ -27,6 +20,10 @@ import {
 import { Button } from "../components/ui/button"
 import { SimpleModal } from "../components/ui/simple-modal"
 import { Input } from "../components/ui/input"
+import { PageHeader } from "../components/ui/page-header"
+import { EmptyState } from "../components/ui/empty-state"
+import { Skeleton } from "../components/ui/skeleton"
+import { ListCard } from "../components/ui/list-card"
 
 export function SubscriptionManagement() {
   const {
@@ -192,81 +189,69 @@ export function SubscriptionManagement() {
     }
   }
 
+  const renderActions = () => (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleRefresh}
+        disabled={loading}
+        className="hover:bg-secondary/80"
+      >
+        <RefreshCw
+          className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+        />
+        刷新
+      </Button>
+      {selectedIds.size > 0 && (
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleBulkDelete}
+          disabled={isBulkDeleting}
+          className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          批量删除 ({selectedIds.size})
+        </Button>
+      )}
+      <Button
+        size="sm"
+        onClick={() => setOpen(true)}
+        className="shadow-sm shadow-primary/20"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        添加订阅
+      </Button>
+    </>
+  )
+
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 reveal">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">
-            订阅管理
-          </h1>
-          {filteredData.length > 0 && (
-             <Checkbox
-              isSelected={
-                filteredData.length > 0 &&
-                filteredData.every((sub: any) => selectedIds.has(sub.id))
+      <PageHeader
+        title="订阅管理"
+        search={{
+          value: searchTerm,
+          onChange: setSearchTerm,
+          placeholder: "搜索订阅...",
+        }}
+        selectAll={
+          filteredData.length > 0
+            ? {
+                checked:
+                  filteredData.length > 0 &&
+                  filteredData.every((sub: any) => selectedIds.has(sub.id)),
+                onChange: toggleSelectAll,
+                label: "全选",
               }
-              onValueChange={toggleSelectAll}
-              size="sm"
-              classNames={{
-                wrapper: "group-hover:border-primary transition-colors",
-              }}
-            >
-              全选
-            </Checkbox>
-          )}
-        </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Input
-            placeholder="搜索订阅..."
-            startContent={<Search className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />}
-            className="w-full sm:w-64"
-            classNames={{
-              inputWrapper: "bg-secondary/50 dark:bg-default-500/20 border-border/50 hover:border-primary/50 transition-colors",
-            }}
-            radius="lg"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            size="sm"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="hover:bg-secondary/80"
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
-            />
-            刷新
-          </Button>
-          {selectedIds.size > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleBulkDelete}
-              disabled={isBulkDeleting}
-              className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              批量删除 ({selectedIds.size})
-            </Button>
-          )}
-          <Button size="sm" onClick={() => setOpen(true)} className="shadow-sm shadow-primary/20">
-            <Plus className="h-4 w-4 mr-2" />
-            添加订阅
-          </Button>
-        </div>
-      </div>
+            : undefined
+        }
+        actions={renderActions()}
+      />
 
       <div className="space-y-4 reveal reveal-delay-100">
-              {loading && sourceList.length === 0 ? (
-          <div className="p-8 text-center space-y-4">
-            <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
-            <p className="text-muted-foreground animate-pulse">
-              正在获取订阅源...
-            </p>
-          </div>
+        {loading && sourceList.length === 0 ? (
+          <Skeleton variant="list" count={3} />
         ) : error ? (
           <div className="p-8 text-center text-red-500 bg-red-50/50 rounded-lg">
             <p>无法获取订阅列表: {error.message}</p>
@@ -274,124 +259,102 @@ export function SubscriptionManagement() {
               重试
             </Button>
           </div>
-              ) : sourceList.length === 0 ? (
-          <div className="p-20 text-center text-muted-foreground border-2 border-dashed border-muted rounded-xl">
-            <Rss className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p>暂无订阅源</p>
-          </div>
+        ) : sourceList.length === 0 ? (
+          <EmptyState
+            icon={Rss}
+            title="暂无订阅源"
+            description="点击右上角按钮添加您的第一个订阅源"
+          />
         ) : filteredData.length === 0 ? (
-          <div className="p-20 text-center text-muted-foreground border-2 border-dashed border-muted rounded-xl">
-            <Search className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p>未找到匹配的订阅源</p>
-            <Button variant="link" onClick={() => setSearchTerm("")}>
-              清除搜索
-            </Button>
-          </div>
+          <EmptyState
+            icon={Rss}
+            title="未找到匹配的订阅源"
+            action={
+              <Button variant="link" onClick={() => setSearchTerm("")}>
+                清除搜索
+              </Button>
+            }
+          />
         ) : (
           filteredData.map((sub: any, index: number) => (
-            <Card
+            <ListCard
               key={sub.id || index}
+              icon={Rss}
+              iconClassName="bg-orange-100 text-orange-600"
+              title={sub.name || "未命名订阅"}
+              description={sub.url || "https://example.com/subscription/feed"}
+              isSelected={selectedIds.has(sub.id)}
+              onSelect={() => toggleSelect(sub.id)}
               isPressable
               onPress={() => toggleSelect(sub.id)}
-              className={`border-none shadow-sm hover:shadow-lg transition-all cursor-pointer group ${
-                selectedIds.has(sub.id) ? "ring-2 ring-primary" : ""
-              }`}
-            >
-              <CardBody className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div
-                    className="flex items-center self-center"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                     <Checkbox isSelected={selectedIds.has(sub.id)} onValueChange={() => toggleSelect(sub.id)} />
-                  </div>
-                  <div className="h-10 w-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                    <Rss className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-foreground">
-                        {sub.name || "未命名订阅"}
-                      </h3>
-                      {sub.status && (
-                        <Chip size="sm" variant="flat" color="primary" className="h-5 text-[10px] uppercase">
-                            {sub.status}
-                        </Chip>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-1 break-all font-mono">
-                      {sub.url || "https://example.com/subscription/feed"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 pl-14 md:pl-0">
-                  <div className="flex flex-col items-end text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      更新于{" "}
-                      {sub.updatedAt
-                        ? new Date(sub.updatedAt).toLocaleDateString()
-                        : "从未"}
-                    </span>
-                    <span>{sub.count || 0} 个节点</span>
-                  </div>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Tooltip content="同步">
-                         <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => handleSync(e, sub.id)}
-                          disabled={syncing}
-                        >
-                          <RefreshCw
-                            className={`h-3 w-3 mr-2 ${
-                              syncing ? "animate-spin" : ""
-                            }`}
-                          />
-                          同步
-                        </Button>
-                    </Tooltip>
-                     <Tooltip content="打开链接">
-                         <Button
-                          variant="ghost"
-                          size="icon"
-                          as="a"
-                          href={sub.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                    </Tooltip>
-                    <div className="w-px h-4 bg-border mx-1"></div>
-                     <Tooltip content="编辑">
-                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground"
-                          onClick={(e) => handleEdit(sub, e)}
-                          title="编辑订阅源"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                    </Tooltip>
-                     <Tooltip content="删除" color="danger">
-                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground"
-                          onClick={(e) => handleDelete(e, sub.id)}
-                          disabled={removing}
-                          title="删除订阅源"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </Tooltip>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
+              meta={
+                <>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    更新于{" "}
+                    {sub.updatedAt
+                      ? new Date(sub.updatedAt).toLocaleDateString()
+                      : "从未"}
+                  </span>
+                  <span>{sub.count || 0} 个节点</span>
+                </>
+              }
+              actions={
+                <>
+                  <Tooltip content="同步">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleSync(e, sub.id)}
+                      disabled={syncing}
+                    >
+                      <RefreshCw
+                        className={`h-3 w-3 mr-2 ${
+                          syncing ? "animate-spin" : ""
+                        }`}
+                      />
+                      同步
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content="打开链接">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      as="a"
+                      href={sub.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </Tooltip>
+                  <div className="w-px h-4 bg-border mx-1" />
+                  <Tooltip content="编辑">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground"
+                      onClick={(e) => handleEdit(sub, e)}
+                      title="编辑订阅源"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content="删除" color="danger">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground"
+                      onClick={(e) => handleDelete(e, sub.id)}
+                      disabled={removing}
+                      title="删除订阅源"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </Tooltip>
+                </>
+              }
+            />
           ))
         )}
       </div>
@@ -414,45 +377,45 @@ export function SubscriptionManagement() {
           </>
         }
       >
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Input
-                id="name"
-                label="名称 (可选)"
-                labelPlacement="outside"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="订阅源名称"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Input
-                id="url"
-                label="订阅 URL *"
-                labelPlacement="outside"
-                value={formData.url}
-                onChange={(e) =>
-                  setFormData({ ...formData, url: e.target.value })
-                }
-                placeholder="https://..."
-              />
-            </div>
-            <div className="grid gap-2">
-              <Input
-                id="interval"
-                label="更新间隔 (分钟)"
-                labelPlacement="outside"
-                type="number"
-                value={formData.updateInterval}
-                onChange={(e) =>
-                  setFormData({ ...formData, updateInterval: e.target.value })
-                }
-                placeholder="60"
-              />
-            </div>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Input
+              id="name"
+              label="名称 (可选)"
+              labelPlacement="outside"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              placeholder="订阅源名称"
+            />
           </div>
+          <div className="grid gap-2">
+            <Input
+              id="url"
+              label="订阅 URL *"
+              labelPlacement="outside"
+              value={formData.url}
+              onChange={(e) =>
+                setFormData({ ...formData, url: e.target.value })
+              }
+              placeholder="https://..."
+            />
+          </div>
+          <div className="grid gap-2">
+            <Input
+              id="interval"
+              label="更新间隔 (分钟)"
+              labelPlacement="outside"
+              type="number"
+              value={formData.updateInterval}
+              onChange={(e) =>
+                setFormData({ ...formData, updateInterval: e.target.value })
+              }
+              placeholder="60"
+            />
+          </div>
+        </div>
       </SimpleModal>
     </div>
   )

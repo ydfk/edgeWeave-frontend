@@ -8,11 +8,10 @@ import {
   Pencil,
   Trash2,
   Search,
+  AlertCircle,
 } from "lucide-react"
 import { useRequest } from "alova/client"
 import {
-  Card,
-  CardBody,
   Checkbox,
   Chip,
   Select,
@@ -34,6 +33,10 @@ import { Button } from "../components/ui/button"
 import { SimpleModal } from "../components/ui/simple-modal"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
+import { PageHeader } from "../components/ui/page-header"
+import { EmptyState } from "../components/ui/empty-state"
+import { Skeleton } from "../components/ui/skeleton"
+import { GridCard } from "../components/ui/grid-card"
 
 export function OutputManagement() {
   const {
@@ -257,181 +260,159 @@ export function OutputManagement() {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 reveal">
-        <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">
-            输出管理
-          </h1>
-          {filteredData.length > 0 && (
-             <Checkbox
-              isSelected={
-                filteredData.length > 0 &&
-                filteredData.every((output: any) => selectedIds.has(output.id))
-              }
-              onValueChange={toggleSelectAll}
-              size="sm"
-              classNames={{
-                wrapper: "group-hover:border-primary transition-colors",
-              }}
-            >
-              全选
-            </Checkbox>
-          )}
-        </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Input
-            placeholder="搜索输出配置..."
-            startContent={<Search className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />}
-            className="w-full sm:w-64"
-            classNames={{
-              inputWrapper: "bg-secondary/50 dark:bg-default-500/20 border-border/50 hover:border-primary/50 transition-colors",
-            }}
-            radius="lg"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            size="sm"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="hover:bg-secondary/80"
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
-            />
-            刷新
-          </Button>
-          {selectedIds.size > 0 && (
+      <PageHeader
+        title="输出管理"
+        search={{
+          value: searchTerm,
+          onChange: setSearchTerm,
+          placeholder: "搜索输出配置...",
+        }}
+        selectAll={{
+          checked:
+            filteredData.length > 0 &&
+            filteredData.every((output: any) => selectedIds.has(output.id)),
+          onChange: toggleSelectAll,
+          label: "全选",
+        }}
+        actions={
+          <>
             <Button
-              variant="destructive"
+              variant="outline"
               size="sm"
-              onClick={handleBulkDelete}
-              disabled={isBulkDeleting}
-              className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
+              onClick={handleRefresh}
+              disabled={loading}
+              className="hover:bg-secondary/80"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              批量删除 ({selectedIds.size})
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
+              刷新
             </Button>
-          )}
-          <Button size="sm" onClick={() => setOpen(true)} className="shadow-sm shadow-primary/20">
-            <Plus className="h-4 w-4 mr-2" />
-            新建输出
-          </Button>
-        </div>
-      </div>
+            {selectedIds.size > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                批量删除 ({selectedIds.size})
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={() => setOpen(true)}
+              className="shadow-sm shadow-primary/20"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              新建输出
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 reveal reveal-delay-100">
         {loading && outputList.length === 0 ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="h-32 animate-pulse">
-               <CardBody className="space-y-4">
-                <div className="h-6 w-1/3 bg-muted rounded"></div>
-                <div className="space-y-2">
-                  <div className="h-4 w-full bg-muted rounded"></div>
-                  <div className="h-4 w-2/3 bg-muted rounded"></div>
-                </div>
-               </CardBody>
-            </Card>
-          ))
+          <div className="col-span-full">
+            <Skeleton variant="grid" count={6} />
+          </div>
         ) : error ? (
-          <div className="col-span-full py-10 text-center text-red-500 bg-red-50/50 rounded-lg">
-            <p>无法获取输出列表: {error.message}</p>
-            <Button variant="link" onClick={() => refresh()}>
-              重试
-            </Button>
+          <div className="col-span-full">
+            <EmptyState
+              icon={AlertCircle}
+              title="无法获取输出列表"
+              description={error.message}
+              className="text-red-500 bg-red-50/50"
+              action={
+                <Button variant="link" onClick={() => refresh()}>
+                  重试
+                </Button>
+              }
+            />
           </div>
         ) : outputList.length === 0 ? (
-          <div className="col-span-full py-20 text-center text-muted-foreground border-2 border-dashed border-muted rounded-xl">
-            <Download className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p>暂无输出配置</p>
+          <div className="col-span-full">
+            <EmptyState
+              icon={Download}
+              title="暂无输出配置"
+              description="创建一个新的输出配置来生成订阅文件"
+            />
           </div>
         ) : filteredData.length === 0 ? (
-          <div className="col-span-full py-20 text-center text-muted-foreground border-2 border-dashed border-muted rounded-xl">
-            <Search className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p>未找到匹配的输出配置</p>
-            <Button variant="link" onClick={() => setSearchTerm("")}>
-              清除搜索
-            </Button>
+          <div className="col-span-full">
+            <EmptyState
+              icon={Search}
+              title="未找到匹配的输出配置"
+              description="尝试调整搜索关键词"
+              action={
+                <Button variant="link" onClick={() => setSearchTerm("")}>
+                  清除搜索
+                </Button>
+              }
+            />
           </div>
         ) : (
           filteredData.map((output: any, index: number) => (
-            <Card
+            <GridCard
               key={output.id || index}
+              icon={Download}
+              iconClassName="bg-blue-50 text-blue-600"
+              title={output.name || "未命名输出"}
+              description={output.description || "无描述"}
+              isSelected={selectedIds.has(output.id)}
+              onSelect={() => toggleSelect(output.id)}
               isPressable
               onPress={() => toggleSelect(output.id)}
-              className={`border-none shadow-sm hover:shadow-lg transition-all group relative overflow-hidden ${
-                selectedIds.has(output.id)
-                  ? "ring-2 ring-primary"
-                  : ""
-              }`}
-            >
-              <CardBody className="p-6">
-                 <div className="absolute top-3 left-3 z-10">
-                    <Checkbox isSelected={selectedIds.has(output.id)} onValueChange={() => toggleSelect(output.id)} />
-                 </div>
-                <div className="flex justify-between items-start mb-4 pl-8">
-                  <div>
-                    <h3 className="font-semibold text-lg">
-                      {output.name || "未命名输出"}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {output.description || "无描述"}
-                    </p>
-                  </div>
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                    <Download className="h-5 w-5" />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
-                  <div className="text-xs text-muted-foreground flex items-center gap-2">
-                    <Clock className="h-3 w-3" />
-                    <span>
-                      {output.lastGenerated
-                        ? new Date(output.lastGenerated).toLocaleDateString()
-                        : "从未"}
-                    </span>
-                  </div>
-                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                    <Tooltip content="编辑">
-                         <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-muted-foreground hover:text-primary"
-                          onClick={(e) => handleEdit(output, e)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                    </Tooltip>
-                     <Tooltip content="删除" color="danger">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                          onClick={(e) => handleDelete(output.id, e)}
-                          disabled={removing}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </Tooltip>
-                    <div className="w-px h-4 bg-border mx-1 self-center"></div>
-                    <Tooltip content="生成配置">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => handleGenerate(output.id, e)}
-                          disabled={generating}
-                        >
-                          <Play className="h-3 w-3 mr-2" />
-                          生成
-                        </Button>
-                    </Tooltip>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
+              footer={
+                <>
+                  <Clock className="h-3 w-3 mr-1" />
+                  <span>
+                    {output.lastGenerated
+                      ? new Date(output.lastGenerated).toLocaleDateString()
+                      : "从未"}
+                  </span>
+                </>
+              }
+              actions={
+                <>
+                  <Tooltip content="编辑">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={(e) => handleEdit(output, e)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip content="删除" color="danger">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                      onClick={(e) => handleDelete(output.id, e)}
+                      disabled={removing}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </Tooltip>
+                  <div className="w-px h-4 bg-border mx-1 self-center"></div>
+                  <Tooltip content="生成配置">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => handleGenerate(output.id, e)}
+                      disabled={generating}
+                      className="h-8"
+                    >
+                      <Play className="h-3 w-3 mr-2" />
+                      生成
+                    </Button>
+                  </Tooltip>
+                </>
+              }
+            />
           ))
         )}
       </div>
@@ -585,10 +566,10 @@ export function OutputManagement() {
                         onValueChange={() => toggleNode(node.id)}
                         size="sm"
                       >
-                         <div className="flex items-center justify-between w-full min-w-[200px]">
-                            <span className="text-sm font-medium">{node.name || node.id}</span>
-                            <Chip size="sm" variant="flat" className="ml-2 h-5 text-[10px]">{node.type}</Chip>
-                         </div>
+                        <div className="flex items-center justify-between w-full min-w-[200px]">
+                          <span className="text-sm font-medium">{node.name || node.id}</span>
+                          <Chip size="sm" variant="flat" className="ml-2 h-5 text-[10px]">{node.type}</Chip>
+                        </div>
                       </Checkbox>
                     </div>
                   ))
