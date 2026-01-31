@@ -52,7 +52,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       {/* Floating Sidebar Container */}
       <aside
         className={cn(
-          "fixed md:sticky top-0 left-0 z-50 h-[100dvh] transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col py-3 pl-3",
+          "fixed md:sticky top-0 left-0 z-50 min-h-screen transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col py-3 pl-3",
           collapsed ? "w-[80px]" : "w-[260px]",
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
@@ -93,20 +93,21 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 to={item.href}
                 className={({ isActive }) =>
                   cn(
-                    "relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-300 group overflow-hidden whitespace-nowrap outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring",
+                    "relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors duration-300 group overflow-hidden whitespace-nowrap outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring",
                     isActive
-                      ? "text-primary-foreground shadow-md shadow-primary/25 translate-x-1"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/60 hover:translate-x-1",
+                      ? "text-primary-foreground shadow-md shadow-primary/25"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
                     collapsed && "justify-center px-0"
                   )
                 }
                 title={collapsed ? item.label : undefined}
+                aria-label={collapsed ? item.label : undefined}
               >
                 {({ isActive }) => (
                   <>
-                    {/* Active Background - Fluid Gradient */}
+                    {/* Active Background - Gradient */}
                     {isActive && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 -z-10 rounded-xl animate-fade-in" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 -z-10 rounded-xl" />
                     )}
 
                     {/* Icon */}
