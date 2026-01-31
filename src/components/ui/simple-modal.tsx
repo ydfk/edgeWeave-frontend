@@ -43,7 +43,8 @@ export function SimpleModal({
       isOpen={isOpen}
       onOpenChange={(open) => !open && onClose()}
       size={size}
-      className={cn("animate-zoom-in", className)}
+      className={cn("animate-zoom-in max-h-[90vh]", className)}
+      scrollBehavior="inside"
     >
       <ModalContent className={sizeMap[size]}>
         {() => (
@@ -58,7 +59,7 @@ export function SimpleModal({
             </ModalHeader>
             <ModalBody>{children}</ModalBody>
             {footer ? (
-              <ModalFooter className="gap-2">
+              <ModalFooter className="gap-2" style={{ pointerEvents: isLoading ? "none" : "auto", opacity: isLoading ? 0.6 : 1 }}>
                 {isLoading ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <div className="h-4 w-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />

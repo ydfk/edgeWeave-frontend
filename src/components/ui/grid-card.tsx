@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Card, CardBody, Checkbox } from "@heroui/react"
+import { motion } from "framer-motion"
 import { cn } from "../../lib/utils"
 
 export interface GridCardProps {
@@ -30,15 +31,19 @@ export function GridCard({
   className,
 }: GridCardProps) {
   return (
-    <Card
-      isPressable={isPressable}
-      onPress={onPress}
-      className={cn(
-        "border-none shadow-sm hover:shadow-lg transition-all group relative overflow-hidden",
-        isSelected ? "ring-2 ring-primary" : "",
-        className
-      )}
+    <motion.div
+      whileHover={{ scale: 1.02, y: -2 }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
     >
+      <Card
+        isPressable={isPressable}
+        onPress={onPress}
+        className={cn(
+          "border-none shadow-sm hover:shadow-lg transition-shadow group relative overflow-hidden",
+          isSelected && "ring-2 ring-primary bg-primary/5",
+          className
+        )}
+      >
       <CardBody className="p-6 space-y-4">
         {onSelect && (
           <div className="absolute top-3 left-3 z-10">
@@ -86,5 +91,6 @@ export function GridCard({
         )}
       </CardBody>
     </Card>
+    </motion.div>
   )
 }

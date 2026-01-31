@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Card, CardBody, Checkbox } from "@heroui/react"
+import { motion } from "framer-motion"
 import { cn } from "../../lib/utils"
 
 export interface ListCardProps {
@@ -30,15 +31,19 @@ export function ListCard({
   className,
 }: ListCardProps) {
   return (
-    <Card
-      isPressable={isPressable}
-      onPress={onPress}
-      className={cn(
-        "border-none shadow-sm hover:shadow-lg transition-all group relative overflow-hidden",
-        isSelected ? "ring-2 ring-primary" : "",
-        className
-      )}
+    <motion.div
+      whileHover={{ scale: 1.02, y: -2 }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
     >
+      <Card
+        isPressable={isPressable}
+        onPress={onPress}
+        className={cn(
+          "border-none shadow-sm hover:shadow-lg transition-shadow group relative overflow-hidden",
+          isSelected && "ring-2 ring-primary bg-primary/5",
+          className
+        )}
+      >
       <CardBody className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
           {onSelect && (
@@ -88,5 +93,6 @@ export function ListCard({
         </div>
       </CardBody>
     </Card>
+    </motion.div>
   )
 }

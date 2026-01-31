@@ -1,4 +1,5 @@
 import * as React from "react"
+import { motion } from "framer-motion"
 import { cn } from "../../lib/utils"
 
 export interface EmptyStateProps {
@@ -17,7 +18,10 @@ export function EmptyState({
   className,
 }: EmptyStateProps) {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
       className={cn(
         "flex flex-col items-center justify-center p-20 text-center",
         "border-2 border-dashed border-muted rounded-xl",
@@ -32,6 +36,6 @@ export function EmptyState({
         </p>
       ) : null}
       {action ? <div className="mt-4">{action}</div> : null}
-    </div>
+    </motion.div>
   )
 }
