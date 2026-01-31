@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { RefreshCw, Plus, Pencil, Trash2, Server, Globe } from "lucide-react"
 import { useRequest } from "alova/client"
 import {
@@ -16,6 +16,7 @@ import {
   updateNode,
   deleteNode,
   getNodeTags,
+  parseNodes,
 } from "../lib/api/methods/nodes"
 import { getSubscriptionSources } from "../lib/api/methods/subscriptions"
 import { Button } from "../components/ui/button"
@@ -78,6 +79,47 @@ export function NodeManagement() {
   const [selectedProtocol, setSelectedProtocol] = useState<string | null>(null)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<string>("all")
+  const parseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // 自动解析 rawContent 中的 URI
+  useEffect(() => {
+    // 清除之前的定时器
+    if (parseTimeoutRef.current) {
+      clearTimeout(parseTimeoutRef.current)
+    }
+
+    // 只在有内容且看起来像 URI 时才解析
+    const content = formData.rawContent.trim()
+    if (!content || !content.match(/^(vmess|vless|trojan|ss|ssr):\/\//)) {
+      return
+    }
+
+    // 防抖：500ms 后执行解析
+    parseTimeoutRef.current = setTimeout(async () => {
+      try {
+        const result = await parseNodes(content, "uri")
+        const parsed = (result as any)?.data?.data?.[0]
+        
+        if (parsed) {
+          // 自动填充 name 和 type
+          setFormData((prev) => ({
+            ...prev,
+            name: prev.name || parsed.name || "",
+            type: prev.type || parsed.type || "",
+          }))
+        }
+      } catch (error) {
+        // 静默失败，不影响用户输入
+        console.warn("Auto-parse failed:", error)
+      }
+    }, 500)
+
+    return () => {
+      if (parseTimeoutRef.current) {
+        clearTimeout(parseTimeoutRef.current)
+      }
+    }
+  }, [formData.rawContent])
 
   const nodeList = Array.isArray(data) ? data : data?.data || []
 
