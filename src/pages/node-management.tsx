@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react"
-import { RefreshCw, Plus, Pencil, Trash2, Server, Globe } from "lucide-react"
+import { RefreshCw, Plus, Globe } from "lucide-react"
 import { useRequest } from "alova/client"
 import {
-  Chip,
   Select,
   SelectItem,
   Autocomplete,
@@ -24,7 +23,6 @@ import { SimpleModal } from "../components/ui/simple-modal"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 import { PageHeader } from "../components/ui/page-header"
-import { GridCard } from "../components/ui/grid-card"
 import { EmptyState } from "../components/ui/empty-state"
 import { Skeleton } from "../components/ui/skeleton"
 import { useToast } from "../components/ui/toast-provider"
@@ -32,6 +30,8 @@ import { useConfirm } from "../components/ui/confirm-dialog"
 import { ProtocolFilter } from "../components/node/protocol-filter"
 import { TagCloud } from "../components/node/tag-cloud"
 import { ImportPanel } from "../components/node/import-panel"
+import { NodeCompactList } from "../components/node/node-compact-list"
+import type { NodeWithParsed } from "../components/node/node-compact-list"
 
 export function NodeManagement() {
   const { toast } = useToast()
@@ -65,9 +65,6 @@ export function NodeManagement() {
   })
   const [open, setOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  // Use Set<string> for selection state
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set([]))
-  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     type: "",
@@ -153,7 +150,6 @@ export function NodeManagement() {
   }, [nodeList, searchTerm, selectedProtocol, selectedTags, activeTab])
 
   const handleRefresh = () => {
-    setSelectedKeys(new Set([]))
     setSelectedProtocol(null)
     setSelectedTags([])
     setActiveTab("all")
@@ -162,44 +158,6 @@ export function NodeManagement() {
 
   const handleTagToggle = (tag: string) => {
     setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
-  }
-
-  const handleBulkDelete = async () => {
-    // Use Set directly, no "all" special case needed
-    const keysToDelete = selectedKeys
-
-    if (keysToDelete.size === 0) return
-    
-    const confirmed = await confirm({
-      title: `确认删除 ${keysToDelete.size} 个节点`,
-      description: "此操作无法撤销，确定要继续吗？",
-      isDestructive: true,
-    })
-    if (!confirmed) return
-
-    setIsBulkDeleting(true)
-    try {
-      const results = await Promise.allSettled(
-        Array.from(keysToDelete).map((id) => deleteNode(id as string).send()),
-      )
-      const success = results.filter(
-        (item) => item.status === "fulfilled",
-      ).length
-      const failed = results.length - success
-      handleRefresh()
-      toast({
-        variant: "success",
-        message: `批量删除完成：成功 ${success}，失败 ${failed}`,
-      })
-    } catch (e: any) {
-      toast({
-        variant: "error",
-        message: "批量删除失败: " + (e.message || "部分删除可能失败"),
-      })
-      handleRefresh()
-    } finally {
-      setIsBulkDeleting(false)
-    }
   }
 
   const handleDelete = async (id: string) => {
@@ -282,38 +240,8 @@ export function NodeManagement() {
     }
   }
 
-  // Selection helpers
-  const isSelected = (id: string) => {
-    return selectedKeys.has(id)
-  }
-
-  const toggleSelection = (id: string) => {
-    setSelectedKeys((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(id)) {
-        newSet.delete(id)
-      } else {
-        newSet.add(id)
-      }
-      return newSet
-    })
-  }
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedKeys(new Set(filteredData.map((n: any) => n.id)))
-    } else {
-      setSelectedKeys(new Set([]))
-    }
-  }
-
-  const allSelected = useMemo(() => {
-    if (filteredData.length === 0) return false
-    return filteredData.every((n: any) => selectedKeys.has(n.id))
-  }, [selectedKeys, filteredData])
-
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-3">
       <PageHeader
         title="节点管理"
         description="管理您的代理节点配置"
@@ -322,15 +250,6 @@ export function NodeManagement() {
           onChange: setSearchTerm,
           placeholder: "搜索节点..."
         }}
-        selectAll={
-          filteredData.length > 0
-            ? {
-                checked: allSelected,
-                onChange: handleSelectAll,
-                label: `全选 (${filteredData.length})`
-              }
-            : undefined
-        }
         actions={
           <>
             <Button
@@ -345,18 +264,6 @@ export function NodeManagement() {
               />
               刷新
             </Button>
-            {(selectedKeys.size > 0) && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleBulkDelete}
-                disabled={isBulkDeleting}
-                className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                批量删除 ({selectedKeys.size})
-              </Button>
-            )}
             <Button size="sm" onClick={() => setOpen(true)} className="shadow-sm shadow-primary/20">
               <Plus className="h-4 w-4 mr-2" />
               新建节点
@@ -436,59 +343,16 @@ export function NodeManagement() {
           }
         />
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 reveal reveal-delay-100">
-          {filteredData.map((node: any) => (
-            <GridCard
-              key={node.id}
-              icon={Server}
-              title={node.name || "未命名节点"}
-              description={node.type}
-              isSelected={isSelected(node.id)}
-              onSelect={() => toggleSelection(node.id)}
-              isPressable
-              onPress={() => handleEdit(node)}
-              footer={
-                <div className="flex items-center justify-between w-full">
-                  <span className="font-mono opacity-50">{node.id.substring(0, 8)}...</span>
-                  <Chip
-                    size="sm"
-                    color={node.status === "online" ? "success" : "default"}
-                    variant="flat"
-                    className="h-5 text-[10px]"
-                  >
-                    {node.status || "未知"}
-                  </Chip>
-                </div>
-              }
-              actions={
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-default-400 hover:text-primary"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleEdit(node)
-                    }}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-default-400 hover:text-danger"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDelete(node.id)
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              }
-            />
-          ))}
-        </div>
+        <NodeCompactList
+          nodes={filteredData as NodeWithParsed[]}
+          loading={loading}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          selectedProtocol={selectedProtocol}
+          onProtocolChange={setSelectedProtocol}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       )}
 
       <SimpleModal
