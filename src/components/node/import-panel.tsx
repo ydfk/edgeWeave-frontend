@@ -16,6 +16,7 @@ export function ImportPanel({ onImportSuccess, onImportError }: ImportPanelProps
   const [subscriptionName, setSubscriptionName] = useState("")
   const [syncInterval, setSyncInterval] = useState("60")
   const [manualContent, setManualContent] = useState("")
+  const [tags, setTags] = useState("")
 
   const { send: doImport, loading: importing } = useRequest(importNodes, {
     immediate: false,
@@ -29,6 +30,12 @@ export function ImportPanel({ onImportSuccess, onImportError }: ImportPanelProps
         return
       }
 
+      // 解析标签（逗号分隔）
+      const tagArray = tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0)
+
       // 构造API请求负载
       const payload: Record<string, unknown> = {}
 
@@ -38,23 +45,35 @@ export function ImportPanel({ onImportSuccess, onImportError }: ImportPanelProps
         payload.rawContent = subscriptionUrl
         payload.namePrefix = subscriptionName || undefined
         payload.syncInterval = parseInt(syncInterval) || 60
+        if (tagArray.length > 0) {
+          payload.tags = tagArray
+        }
       } else if (manualContent) {
         // 手动输入模式
         payload.type = "manual"
         payload.rawContent = manualContent
         payload.splitLines = true
         payload.namePrefix = subscriptionName || undefined
+        if (tagArray.length > 0) {
+          payload.tags = tagArray
+        }
       }
 
-      await doImport(payload)
+      const result = await doImport(payload)
+
+      // 显示导入结果
+      const count = (result as { data?: { count?: number } })?.data?.count || 0
+      onImportSuccess?.()
+      if (count > 0) {
+        onImportError?.(`导入成功: ${count} 个节点`)
+      }
 
       // 清空表单
       setSubscriptionUrl("")
       setSubscriptionName("")
       setSyncInterval("60")
       setManualContent("")
-
-      onImportSuccess?.()
+      setTags("")
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "导入失败"
       onImportError?.(errorMessage)
@@ -111,14 +130,26 @@ export function ImportPanel({ onImportSuccess, onImportError }: ImportPanelProps
               label="手动输入节点"
               labelPlacement="outside"
               placeholder="支持多行节点URL或Clash YAML配置"
-              minRows={5}
+              minRows={10}
               value={manualContent}
               onChange={(e) => setManualContent(e.target.value)}
             />
           </div>
 
+          {/* 标签输入 */}
+          <div className="grid gap-2">
+            <Input
+              id="tags"
+              label="标签 (逗号分隔)"
+              labelPlacement="outside"
+              placeholder="测试,机场A,高速"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+            />
+          </div>
+
           <Button onClick={handleImport} disabled={importing} color="primary" className="w-full">
-            {importing ? "导入中..." : "导入"}
+            {importing ? "导入中..." : "保存节点"}
           </Button>
         </div>
       </AccordionItem>
