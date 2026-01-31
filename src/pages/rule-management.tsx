@@ -24,8 +24,13 @@ import { PageHeader } from "../components/ui/page-header"
 import { EmptyState } from "../components/ui/empty-state"
 import { Skeleton } from "../components/ui/skeleton"
 import { GridCard } from "../components/ui/grid-card"
+import { useToast } from "../components/ui/toast-provider"
+import { useConfirm } from "../components/ui/confirm-dialog"
 
 export function RuleManagement() {
+  const { toast } = useToast()
+  const { confirm } = useConfirm()
+  
   const {
     loading,
     data,
@@ -105,7 +110,13 @@ export function RuleManagement() {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return
-    if (!confirm(`确定要删除选中的 ${selectedIds.size} 个规则集吗？`)) return
+    
+    const confirmed = await confirm({
+      title: "批量删除确认",
+      description: `确定要删除选中的 ${selectedIds.size} 个规则集吗？此操作无法撤销。`,
+      isDestructive: true,
+    })
+    if (!confirmed) return
 
     setIsBulkDeleting(true)
     try {
@@ -117,9 +128,15 @@ export function RuleManagement() {
       ).length
       const failed = results.length - success
       handleRefresh()
-      alert(`批量删除完成：成功 ${success}，失败 ${failed}`)
+      toast({
+        variant: success > 0 && failed === 0 ? "success" : "warning",
+        message: `批量删除完成：成功 ${success}，失败 ${failed}`,
+      })
     } catch (e: any) {
-      alert("批量删除失败: " + (e.message || "部分删除可能失败"))
+      toast({
+        variant: "error",
+        message: "批量删除失败: " + (e.message || "部分删除可能失败"),
+      })
       handleRefresh()
     } finally {
       setIsBulkDeleting(false)
@@ -146,18 +163,26 @@ export function RuleManagement() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!confirm("确定要删除该规则集吗？")) return
+    
+    const confirmed = await confirm({
+      title: "确认删除",
+      description: "此操作无法撤销，确定要删除该规则集吗？",
+      isDestructive: true,
+    })
+    if (!confirmed) return
+    
     try {
       await remove(id)
       handleRefresh()
+      toast({ variant: "success", message: "规则集已删除" })
     } catch (err: any) {
-      alert("删除失败: " + (err.message || "未知错误"))
+      toast({ variant: "error", message: "删除失败: " + (err.message || "未知错误") })
     }
   }
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.rawContent) {
-      alert("请填写必要字段 (名称, 规则内容)")
+      toast({ variant: "error", message: "请填写必要字段 (名称, 规则内容)" })
       return
     }
     try {
@@ -167,16 +192,19 @@ export function RuleManagement() {
 
       if (editingId) {
         await update(editingId, payload)
+        toast({ variant: "success", message: "规则集已更新" })
       } else {
         await create(payload)
+        toast({ variant: "success", message: "规则集已创建" })
       }
 
       handleClose()
       handleRefresh()
     } catch (e: any) {
-      alert(
-        (editingId ? "更新" : "创建") + "失败: " + (e.message || "未知错误"),
-      )
+      toast({
+        variant: "error",
+        message: (editingId ? "更新" : "创建") + "失败: " + (e.message || "未知错误"),
+      })
     }
   }
 

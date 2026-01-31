@@ -23,8 +23,12 @@ import { PageHeader } from "../components/ui/page-header"
 import { GridCard } from "../components/ui/grid-card"
 import { EmptyState } from "../components/ui/empty-state"
 import { Skeleton } from "../components/ui/skeleton"
+import { useToast } from "../components/ui/toast-provider"
+import { useConfirm } from "../components/ui/confirm-dialog"
 
 export function NodeManagement() {
+  const { toast } = useToast()
+  const { confirm } = useConfirm()
   const {
     loading,
     data,
@@ -82,7 +86,13 @@ export function NodeManagement() {
     const keysToDelete = selectedKeys
 
     if (keysToDelete.size === 0) return
-    if (!confirm(`确定要删除选中的 ${keysToDelete.size} 个节点吗？`)) return
+    
+    const confirmed = await confirm({
+      title: `确认删除 ${keysToDelete.size} 个节点`,
+      description: "此操作无法撤销，确定要继续吗？",
+      isDestructive: true,
+    })
+    if (!confirmed) return
 
     setIsBulkDeleting(true)
     try {
@@ -94,9 +104,15 @@ export function NodeManagement() {
       ).length
       const failed = results.length - success
       handleRefresh()
-      alert(`批量删除完成：成功 ${success}，失败 ${failed}`)
+      toast({
+        variant: "success",
+        message: `批量删除完成：成功 ${success}，失败 ${failed}`,
+      })
     } catch (e: any) {
-      alert("批量删除失败: " + (e.message || "部分删除可能失败"))
+      toast({
+        variant: "error",
+        message: "批量删除失败: " + (e.message || "部分删除可能失败"),
+      })
       handleRefresh()
     } finally {
       setIsBulkDeleting(false)
@@ -104,12 +120,25 @@ export function NodeManagement() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("确定要删除该节点吗？")) return
+    const confirmed = await confirm({
+      title: "确认删除",
+      description: "此操作无法撤销，确定要删除该节点吗？",
+      isDestructive: true,
+    })
+    if (!confirmed) return
+    
     try {
       await remove(id)
       handleRefresh()
+      toast({
+        variant: "success",
+        message: "节点已删除",
+      })
     } catch (e: any) {
-      alert("删除失败: " + (e.message || "未知错误"))
+      toast({
+        variant: "error",
+        message: "删除失败: " + (e.message || "未知错误"),
+      })
     }
   }
 
@@ -137,7 +166,10 @@ export function NodeManagement() {
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.type || !formData.rawContent) {
-      alert("请填写必要字段 (名称, 类型, 内容)")
+      toast({
+        variant: "error",
+        message: "请填写必要字段 (名称, 类型, 内容)",
+      })
       return
     }
     try {
@@ -146,15 +178,24 @@ export function NodeManagement() {
 
       if (editingId) {
         await update(editingId, payload)
+        toast({
+          variant: "success",
+          message: "节点已更新",
+        })
       } else {
         await create(payload)
+        toast({
+          variant: "success",
+          message: "节点已创建",
+        })
       }
       handleClose()
       handleRefresh()
     } catch (e: any) {
-      alert(
-        (editingId ? "更新" : "创建") + "失败: " + (e.message || "未知错误"),
-      )
+      toast({
+        variant: "error",
+        message: (editingId ? "更新" : "创建") + "失败: " + (e.message || "未知错误"),
+      })
     }
   }
 
