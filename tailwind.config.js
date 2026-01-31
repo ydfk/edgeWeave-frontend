@@ -32,6 +32,38 @@ export default {
     },
 
     extend: {
+      spacing: {
+        1: "var(--space-1)",
+        2: "var(--space-2)",
+        3: "var(--space-3)",
+        4: "var(--space-4)",
+        5: "var(--space-5)",
+        6: "var(--space-6)",
+        7: "var(--space-7)",
+        8: "var(--space-8)",
+        9: "var(--space-9)",
+        10: "var(--space-10)",
+        11: "var(--space-11)",
+        12: "var(--space-12)",
+      },
+
+      boxShadow: {
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)",
+      },
+
+      transitionDuration: {
+        fast: "var(--duration-fast)",
+        normal: "var(--duration-normal)",
+        slow: "var(--duration-slow)",
+      },
+
+      transitionTimingFunction: {
+        "expo-out": "var(--ease-out-expo)",
+      },
+
       colors: {
         border: "hsl(var(--border))",
 

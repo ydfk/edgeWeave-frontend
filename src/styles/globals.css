@@ -35,11 +35,40 @@
     --ring: 160 84% 39%;
 
     --radius: 0.5rem;
+
+    /* Design Tokens - Spacing */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-7: 28px;
+    --space-8: 32px;
+    --space-9: 36px;
+    --space-10: 40px;
+    --space-11: 44px;
+    --space-12: 48px;
+
+    /* Design Tokens - Shadow */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+    /* Design Tokens - Animation */
+    --duration-fast: 150ms;
+    --duration-normal: 200ms;
+    --duration-slow: 300ms;
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* Design Tokens - Touch Target */
+    --min-touch-target: 40px;
   }
 
   .dark {
-    /* Dark Mode - Cyberpunk/Dashboard */
-    --background: 222 47% 11%; /* Deep Navy */
+    /* Dark Mode - Slate 900 Inspired (#0f172a) */
+    --background: 222 47% 11%; /* Slate-900 */
     --foreground: 210 40% 98%;
 
     --card: 217 33% 17%; /* Slightly lighter navy */
