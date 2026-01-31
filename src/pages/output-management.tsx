@@ -28,7 +28,7 @@ import {
   deleteOutput,
 } from "../lib/api/methods/outputs"
 import { getRuleSets } from "../lib/api/methods/rules"
-import { getNodes } from "../lib/api/methods/nodes"
+import { getNodes, getNodeTags } from "../lib/api/methods/nodes"
 import { Button } from "../components/ui/button"
 import { SimpleModal } from "../components/ui/simple-modal"
 import { Input } from "../components/ui/input"
@@ -39,6 +39,8 @@ import { Skeleton } from "../components/ui/skeleton"
 import { GridCard } from "../components/ui/grid-card"
 import { useToast } from "../components/ui/toast-provider"
 import { useConfirm } from "../components/ui/confirm-dialog"
+import { ProtocolFilter } from "../components/node/protocol-filter"
+import { TagCloud } from "../components/node/tag-cloud"
 
 export function OutputManagement() {
   const { toast } = useToast()
@@ -55,6 +57,7 @@ export function OutputManagement() {
 
   const { data: ruleSets } = useRequest(getRuleSets, { initialData: [] })
   const { data: nodes } = useRequest(getNodes, { initialData: [] })
+  const { data: tagsData } = useRequest(getNodeTags, { initialData: [] })
 
   const { send: generate, loading: generating } = useRequest(renderOutput, {
     immediate: false,
@@ -84,10 +87,13 @@ export function OutputManagement() {
   const [nodeSearch, setNodeSearch] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [showSelectedOnly, setShowSelectedOnly] = useState(false)
+  const [nodeFilterProtocol, setNodeFilterProtocol] = useState<string | null>(null)
+  const [nodeFilterTags, setNodeFilterTags] = useState<string[]>([])
 
   const outputList = Array.isArray(data) ? data : data?.data || []
   const ruleSetList = Array.isArray(ruleSets) ? ruleSets : ruleSets?.data || []
   const nodeList = Array.isArray(nodes) ? nodes : nodes?.data || []
+  const tagsList = Array.isArray(tagsData) ? tagsData : tagsData?.data || []
 
   const selectedNodeIds: string[] = useMemo(() => {
     try {
@@ -107,12 +113,27 @@ export function OutputManagement() {
 
   const handleSelectAllNodes = () => {
     if (nodeList.length === 0) return
-    const nodesToSelect = nodeList.filter(
-      (node: any) =>
+    const nodesToSelect = nodeList.filter((node: any) => {
+      const matchesSearch =
         (node.name || "").toLowerCase().includes(nodeSearch.toLowerCase()) ||
         (node.type || "").toLowerCase().includes(nodeSearch.toLowerCase()) ||
-        (node.id || "").toLowerCase().includes(nodeSearch.toLowerCase()),
-    )
+        (node.id || "").toLowerCase().includes(nodeSearch.toLowerCase())
+      
+      const matchesProtocol = nodeFilterProtocol === null || node.type === nodeFilterProtocol
+      
+      const matchesTags =
+        nodeFilterTags.length === 0 ||
+        nodeFilterTags.every((selectedTag) => {
+          try {
+            const nodeTags = node.tags ? JSON.parse(node.tags) : []
+            return nodeTags.includes(selectedTag)
+          } catch {
+            return false
+          }
+        })
+      
+      return matchesSearch && matchesProtocol && matchesTags
+    })
     const newIds = new Set(selectedNodeIds)
     nodesToSelect.forEach((n: any) => newIds.add(n.id))
     setFormData({ ...formData, nodeIds: JSON.stringify(Array.from(newIds)) })
@@ -120,6 +141,10 @@ export function OutputManagement() {
 
   const handleClearNodeSelection = () => {
     setFormData({ ...formData, nodeIds: "[]" })
+  }
+
+  const handleNodeTagToggle = (tag: string) => {
+    setNodeFilterTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
   }
 
   const handleGenerate = async (id: string, e?: React.MouseEvent) => {
@@ -550,6 +575,25 @@ export function OutputManagement() {
                 </Button>
               </div>
             </div>
+            
+            {/* 节点筛选区域 */}
+            <div className="mb-2 p-2 rounded border bg-muted/30">
+              <div className="grid grid-cols-1 gap-2">
+                <ProtocolFilter 
+                  selectedProtocol={nodeFilterProtocol} 
+                  onProtocolChange={setNodeFilterProtocol} 
+                />
+                <div>
+                  <span className="text-xs font-medium mb-1 block">标签筛选</span>
+                  <TagCloud 
+                    tags={tagsList} 
+                    selectedTags={nodeFilterTags} 
+                    onTagToggle={handleNodeTagToggle} 
+                  />
+                </div>
+              </div>
+            </div>
+            
             <Input
               placeholder="搜索节点 (名称/类型/ID)..."
               value={nodeSearch}
@@ -564,17 +608,32 @@ export function OutputManagement() {
               ) : (
                 (() => {
                   const filtered = nodeList.filter((node: any) => {
-                    const match =
+                    const matchesSearch =
                       (node.name || "")
                         .toLowerCase()
                         .includes(nodeSearch.toLowerCase()) ||
                       (node.type || "").toLowerCase().includes(nodeSearch.toLowerCase()) ||
                       (node.id || "").toLowerCase().includes(nodeSearch.toLowerCase())
 
+                    const matchesProtocol = nodeFilterProtocol === null || node.type === nodeFilterProtocol
+
+                    const matchesTags =
+                      nodeFilterTags.length === 0 ||
+                      nodeFilterTags.every((selectedTag) => {
+                        try {
+                          const nodeTags = node.tags ? JSON.parse(node.tags) : []
+                          return nodeTags.includes(selectedTag)
+                        } catch {
+                          return false
+                        }
+                      })
+
+                    const matchesFilter = matchesSearch && matchesProtocol && matchesTags
+
                     if (showSelectedOnly) {
-                      return match && selectedNodeIds.includes(node.id)
+                      return matchesFilter && selectedNodeIds.includes(node.id)
                     }
-                    return match
+                    return matchesFilter
                   })
                   if (filtered.length === 0) {
                     return (
